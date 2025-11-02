@@ -1,0 +1,58 @@
+[
+	{
+		"id": 1,
+		"name": "Facial Tissue Paper",
+		"price": 30,
+		"image": "/src/lib/images/Facial-Tissue-Paper.jpg",
+		"category": "Home"
+	},
+	{
+		"id": 2,
+		"name": "Hawk",
+		"price": 999,
+		"image": "/src/lib/images/hawk.webp",
+		"category": "Bags"
+	},
+	{
+		"id": 3,
+		"name": "Dark Blue Fade Jeans",
+		"price": 550,
+		"image": "/src/lib/images/darkBlueJeans.webp",
+		"category": "Clothing"
+	},
+	{
+		"id": 4,
+		"name": "Air Jordan 1 Low",
+		"price": 2500,
+		"image": "/src/lib/images/Air-Jordan-1.webp",
+		"category": "Shoes"
+	},
+	{
+		"id": 5,
+		"name": "Wistoria Dress",
+		"price": 1999,
+		"image": "/src/lib/images/Wistoria.webp",
+		"category": "Clothing"
+	},
+	{
+		"id": 6,
+		"name": "ASUS AD45-00B 45W Adapter｜Adapters and Chargers｜ASUS Global",
+		"price": 3500,
+		"image": "/src/lib/images/Asus_charger.jpg",
+		"category": "Electronics"
+	},
+	{
+		"id": 7,
+		"name": "Programming Book",
+		"price": 599,
+		"image": "/src/lib/images/C++_Book.jpg",
+		"category": "Books"
+	},
+	{
+		"id": 8,
+		"name": "Basketball",
+		"price": 899,
+		"image": "/src/lib/images/Basketball.avif",
+		"category": "Sports"
+	}
+]
