@@ -12,7 +12,7 @@
 	import Check from '@tabler/icons-svelte/icons/check';
 	import X from '@tabler/icons-svelte/icons/x';
 	import Trash from '@tabler/icons-svelte/icons/trash';
-	import * as Select from '$lib/components/ui/select/index.js';
+
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
