@@ -1,11 +1,12 @@
-export interface User {
-	id: string;
+import type { Cookies } from '@sveltejs/kit';
+
+export interface LoadContext {
+	cookies: Cookies;
+	url: URL;
+}
+
+export interface UserData {
 	email: string;
-	full_name: string;
-	role: 'user' | 'admin';
-	age: number;
-	address: string;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
+	role: string;
+	id: string;
 }

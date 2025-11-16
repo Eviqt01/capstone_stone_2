@@ -2,7 +2,11 @@
 	import { onMount } from 'svelte';
 	import ShoppingCart from '@tabler/icons-svelte/icons/shopping-cart';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import Menu_2 from '@tabler/icons-svelte/icons/menu-2';
+	import Report from '@tabler/icons-svelte/icons/report';
+	import IconX from '@tabler/icons-svelte/icons/x';
 	import X from '@tabler/icons-svelte/icons/x';
+	import CornerUpLeft from '@tabler/icons-svelte/icons/corner-up-left';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { IconSearch } from '@tabler/icons-svelte';
 	import { ModeWatcher } from 'mode-watcher';
@@ -12,12 +16,57 @@
 
 	let { children } = $props();
 
+	let MenuOpen = $state(false);
+	let userEmail = $state('');
+	let userRole = $state('');
+
+	const handleMenuClick = (event: Event) => {
+		event?.stopPropagation();
+		MenuOpen = !MenuOpen;
+	};
+
+	const menuItems = [
+		{
+			label: 'Shop',
+			href: '/User/Shop',
+			image: ShoppingCart
+		},
+		{
+			label: 'Report',
+			href: '/User/Report',
+			image: Report
+		},
+		{
+			label: 'Log Out',
+			href: '/',
+			image: CornerUpLeft,
+			action: async () => {
+				try {
+					const response = await fetch('/api/auth/logout', {
+						method: 'POST'
+					});
+
+					if (response.ok) {
+						sessionStorage.clear();
+
+						window.location.href = '/login';
+					}
+				} catch (error) {
+					console.error('Logout error:', error);
+					sessionStorage.clear();
+					window.location.href = '/login';
+				}
+			}
+		}
+	];
+
 	interface Product {
-		id: number;
+		id: string;
 		name: string;
 		price: number;
 		image: string;
 		category: string;
+		stock: number;
 	}
 
 	interface CartItem extends Product {
@@ -35,7 +84,8 @@
 	let customerName = $state('');
 	let customerEmail = $state('');
 	let customerPhone = $state('');
-	let paymentMethod = $state('EWALLET');
+	let customerAddress = $state('');
+	let paymentMethod = $state('GCASH');
 
 	const totalItems = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
 	const totalPrice = $derived(cart.reduce((sum, item) => sum + item.price * item.quantity, 0));
@@ -57,82 +107,81 @@
 		return filtered;
 	});
 
-	onMount(async () => {
+	// Function to load user data
+	async function loadUserData() {
 		try {
-			const response = await fetch('/src/routes/(Cart)/products.json');
+			console.log('🔄 Loading user data...');
+
+			// First try to get from API (most reliable)
+			const response = await fetch('/api/auth/user');
 			if (response.ok) {
-				const data = await response.json();
-				products = data.map((p: Product) => ({
-					...p,
-					category: p.category || 'Uncategorized'
-				}));
-				console.log('Products loaded from JSON:', products);
-				return;
+				const userData = await response.json();
+				userEmail = userData.email || '';
+				userRole = userData.role || '';
+
+				// Update session storage with fresh data
+				if (userEmail) {
+					sessionStorage.setItem('userEmail', userEmail);
+					sessionStorage.setItem('userRole', userRole);
+					console.log('✅ User data loaded from API:', userEmail);
+				} else {
+					// If no user data from API, try session storage as fallback
+					userEmail = sessionStorage.getItem('userEmail') || '';
+					userRole = sessionStorage.getItem('userRole') || '';
+					console.log('⚠️ Using session storage fallback:', userEmail);
+				}
+			} else {
+				// Fallback to session storage if API fails
+				userEmail = sessionStorage.getItem('userEmail') || '';
+				userRole = sessionStorage.getItem('userRole') || '';
+				console.log('⚠️ API failed, using session storage:', userEmail);
 			}
 		} catch (error) {
-			console.warn('Could not load products.json, using fallback data:', error);
+			console.error('❌ Error loading user data:', error);
+			// Final fallback to session storage
+			userEmail = sessionStorage.getItem('userEmail') || '';
+			userRole = sessionStorage.getItem('userRole') || '';
+		}
+	}
+
+	onMount(async () => {
+		// Load user data first
+		await loadUserData();
+
+		// Then load products
+		try {
+			const response = await fetch('/api/products');
+			if (response.ok) {
+				const data = await response.json();
+				products = data.products;
+				console.log('Products loaded from database:', products);
+			}
+		} catch (error) {
+			console.warn('Could not load products from database:', error);
 		}
 
-		products = [
-			{
-				id: 1,
-				name: 'Facial Tissue Paper',
-				price: 30,
-				image: '/src/lib/images/Facial-Tissue-Paper.jpg',
-				category: 'Home'
-			},
-			{
-				id: 2,
-				name: 'Hawk',
-				price: 999,
-				image: '/src/lib/images/hawk.webp',
-				category: 'Bags'
-			},
-			{
-				id: 3,
-				name: 'Dark Blue Fade Jeans',
-				price: 550,
-				image: '/src/lib/images/darkBlueJeans.webp',
-				category: 'Clothing'
-			},
-			{
-				id: 4,
-				name: 'Air Jordan 1 low',
-				price: 2500,
-				image: '/src/lib/images/Air-Jordan-1.webp',
-				category: 'Shoes'
-			},
-			{
-				id: 5,
-				name: 'Wistoria Dress',
-				price: 1999,
-				image: '/src/lib/images/Wistoria.webp',
-				category: 'Clothing'
-			},
-			{
-				id: 6,
-				name: 'Programming Book',
-				price: 599,
-				image: '/src/lib/images/book-placeholder.jpg',
-				category: 'Books'
-			},
-			{
-				id: 7,
-				name: 'Basketball',
-				price: 899,
-				image: '/src/lib/images/basketball-placeholder.jpg',
-				category: 'Sports'
-			},
-			{
-				id: 8,
-				name: 'Laptop Charger',
-				price: 1299,
-				image: '/src/lib/images/charger-placeholder.jpg',
-				category: 'Electronics'
-			}
-		];
-		console.log('Using fallback products:', products);
+		// Check if returning from payment success
+		checkPaymentReturn();
 	});
+
+	// Check if returning from payment
+	function checkPaymentReturn() {
+		const urlParams = new URLSearchParams(window.location.search);
+		const paymentStatus = urlParams.get('payment_status');
+		const orderId = urlParams.get('order_id');
+
+		if (paymentStatus === 'success' || window.location.pathname === '/payment-success') {
+			console.log('✅ Returning from successful payment');
+			// Clear cart since payment was successful
+			clearCart();
+			// Remove success parameters from URL
+			window.history.replaceState({}, '', '/User/Shop');
+		} else if (paymentStatus === 'failed' || window.location.pathname === '/payment-failed') {
+			console.log('❌ Returning from failed payment');
+			alert('Payment was not completed. Please try again.');
+			window.history.replaceState({}, '', '/User/Shop');
+		}
+	}
 
 	const categories = ['All', 'Clothing', 'Shoes', 'Electronics', 'Books', 'Sports', 'Bags', 'Home'];
 
@@ -144,9 +193,22 @@
 		isCartVisible = false;
 	};
 
-	const addToCart = (productId: number) => {
+	const addToCart = (productId: string) => {
 		const product = products.find((p) => p.id === productId);
 		if (!product) return;
+
+		if (product.stock <= 0) {
+			alert('Sorry, this product is out of stock!');
+			return;
+		}
+
+		const existingItem = cart.find((item) => item.id === productId);
+		const currentCartQty = existingItem ? existingItem.quantity : 0;
+
+		if (currentCartQty >= product.stock) {
+			alert(`Sorry, only ${product.stock} items available in stock!`);
+			return;
+		}
 
 		const existingItemIndex = cart.findIndex((item) => item.id === productId);
 
@@ -160,11 +222,11 @@
 		}
 	};
 
-	const removeFromCart = (productId: number) => {
+	const removeFromCart = (productId: string) => {
 		cart = cart.filter((item) => item.id !== productId);
 	};
 
-	const updateQuantity = (productId: number, newQuantity: number) => {
+	const updateQuantity = (productId: string, newQuantity: number) => {
 		if (newQuantity <= 0) {
 			removeFromCart(productId);
 			return;
@@ -176,16 +238,21 @@
 		}
 	};
 
-	const decreaseQuantity = (productId: number) => {
+	const decreaseQuantity = (productId: string) => {
 		const item = cart.find((item) => item.id === productId);
 		if (item) {
 			updateQuantity(productId, item.quantity - 1);
 		}
 	};
 
-	const increaseQuantity = (productId: number) => {
+	const increaseQuantity = (productId: string) => {
 		const item = cart.find((item) => item.id === productId);
 		if (item) {
+			const product = products.find((p) => p.id === productId);
+			if (product && item.quantity >= product.stock) {
+				alert(`Sorry, only ${product.stock} items available in stock!`);
+				return;
+			}
 			updateQuantity(productId, item.quantity + 1);
 		}
 	};
@@ -207,11 +274,12 @@
 		customerName = '';
 		customerEmail = '';
 		customerPhone = '';
+		customerAddress = '';
 	};
 
 	const processPayment = async () => {
-		if (!customerName || !customerEmail || !customerPhone) {
-			alert('Please fill in all customer details');
+		if (!customerName || !customerEmail || !customerPhone || !customerAddress) {
+			alert('Please fill in all customer details including address');
 			return;
 		}
 
@@ -229,7 +297,8 @@
 				customer: {
 					name: customerName,
 					email: customerEmail,
-					phone: customerPhone
+					phone: customerPhone,
+					address: customerAddress
 				},
 				items: cart.map((item) => ({
 					id: item.id,
@@ -239,9 +308,11 @@
 					category: item.category
 				})),
 				paymentMethod: paymentMethod,
-				successUrl: window.location.origin + '/payment-success',
-				failureUrl: window.location.origin + '/payment-failed'
+				successUrl: `${window.location.origin}/payment-success?payment_status=success`,
+				failureUrl: `${window.location.origin}/payment-failed?payment_status=failed`
 			};
+
+			console.log('🔄 Sending payment request...');
 
 			const response = await fetch('/api/create-payment', {
 				method: 'POST',
@@ -253,14 +324,18 @@
 
 			const data = await response.json();
 
-			if (data.success && data.paymentUrl) {
+			if (response.ok && data.success) {
+				console.log('✅ Payment created, redirecting to Xendit...');
+				console.log('📋 Order status:', data.status); // Should be "PENDING"
+
 				window.location.href = data.paymentUrl;
 			} else {
 				throw new Error(data.error || 'Payment creation failed');
 			}
 		} catch (error) {
-			console.error('Payment error:', error);
-			alert('Payment failed. Please try again.');
+			console.error('💥 Payment error:', error);
+			alert(`Payment failed: ${error.message}. Please check your details and try again.`);
+		} finally {
 			isProcessingPayment = false;
 		}
 	};
@@ -269,7 +344,27 @@
 <nav
 	class="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-6 py-4 shadow-sm backdrop-blur-md"
 >
-	<h1 class=" text-2xl font-bold">Product Store</h1>
+	<div class="mr-auto flex items-center gap-2">
+		<Button
+			class="cursor-pointer bg-white p-2 hover:bg-gray-50 active:scale-95"
+			onclick={handleMenuClick}
+		>
+			{#if MenuOpen}
+				<IconX class="h-5 w-5 cursor-pointer text-gray-700" />
+			{:else}
+				<Menu_2 class="h-5 w-5 cursor-pointer text-gray-700" />
+			{/if}
+		</Button>
+		<h1 class="text-xl font-bold text-gray-800">Product Store</h1>
+
+		<!-- Add user email display in header -->
+		{#if userEmail}
+			<div class="ml-4 hidden items-center gap-2 rounded-full bg-blue-50 px-3 py-1 sm:flex">
+				<div class="h-2 w-2 rounded-full bg-green-500"></div>
+				<span class="text-sm font-medium text-blue-700">Welcome, {userEmail.split('@')[0]}</span>
+			</div>
+		{/if}
+	</div>
 
 	<div class="flex items-center gap-3">
 		<Button onclick={toggleMode} variant="outline" size="icon" class="cursor-pointer">
@@ -298,6 +393,65 @@
 			{/if}
 		</button>
 	</div>
+	{#if MenuOpen}
+		<section
+			class="absolute top-20 left-0 z-10 flex min-h-75 w-120 max-w-60 animate-in flex-col justify-center rounded-sm bg-gray-800 px-1 py-5 duration-300 slide-in-from-left"
+		>
+			<div class="flex flex-col items-center gap-2 p-2">
+				<h1 class="text-xl font-bold text-white">User Panel</h1>
+				<hr class="w-full border border-gray-700 bg-gray-800" />
+			</div>
+			<ul class="mb-auto animate-in duration-300 slide-in-from-left">
+				{#each menuItems as MenuItems}
+					<li>
+						{#if MenuItems.action}
+							<button
+								onclick={MenuItems.action}
+								class="flex w-full cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+							>
+								<MenuItems.image class="mr-3 h-5 w-5" />
+								{MenuItems.label}
+							</button>
+						{:else}
+							<a
+								href={MenuItems.href}
+								class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+							>
+								<MenuItems.image class="mr-3 h-5 w-5" />
+								{MenuItems.label}
+							</a>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+
+			<div class="absolute right-0 bottom-0 left-0 border-t border-gray-700 bg-gray-800 p-4">
+				<div class="flex items-center">
+					<div class="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+						<span class="text-sm font-medium text-white">
+							{userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+						</span>
+					</div>
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-xs font-medium text-white">
+							{#if userEmail}
+								{userEmail}
+							{:else}
+								Loading...
+							{/if}
+						</p>
+						<p class="truncate text-xs text-gray-400">
+							{#if userRole}
+								{userRole === 'admin' ? 'Administrator' : 'Customer'}
+							{:else}
+								User
+							{/if}
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	{/if}
 </nav>
 
 <section
@@ -357,11 +511,33 @@
 						<div
 							class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
 						></div>
-						<span
-							class="absolute top-3 right-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-blue-600 shadow-md backdrop-blur-sm dark:bg-gray-900/90 dark:text-blue-400"
-						>
-							{product.category}
-						</span>
+
+						<div class="absolute top-3 right-3 flex flex-col gap-2">
+							<span
+								class="rounded-full bg-white/90 px-3 py-1 text-center text-xs font-semibold text-blue-600 shadow-md backdrop-blur-sm dark:bg-gray-900/90 dark:text-blue-400"
+							>
+								{product.category}
+							</span>
+							<span
+								class="rounded-full bg-white/90 px-3 py-1 text-center text-xs font-semibold text-gray-700 shadow-md backdrop-blur-sm dark:bg-gray-900/90 dark:text-gray-300"
+							>
+								Stock: {product.stock}
+							</span>
+						</div>
+
+						{#if product.stock === 0}
+							<span
+								class="absolute top-3 left-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-md"
+							>
+								Out of Stock
+							</span>
+						{:else if product.stock <= 10}
+							<span
+								class="absolute top-3 left-3 rounded-full bg-yellow-500 px-3 py-1 text-xs font-bold text-white shadow-md"
+							>
+								Only {product.stock} left!
+							</span>
+						{/if}
 					</div>
 					<div class="flex flex-1 flex-col gap-3 p-5">
 						<h2 class="line-clamp-2 text-lg font-semibold text-card-foreground">{product.name}</h2>
@@ -371,10 +547,15 @@
 							>
 						</div>
 						<Button
-							class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-3 font-semibold shadow-md transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-lg active:scale-95 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
+							disabled={product.stock === 0}
+							class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-3 font-semibold shadow-md transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
 							onclick={() => addToCart(product.id)}
 						>
-							Add to Cart
+							{#if product.stock === 0}
+								Out of Stock
+							{:else}
+								Add to Cart
+							{/if}
 						</Button>
 					</div>
 				</div>
@@ -515,7 +696,7 @@
 
 						<div class="space-y-3">
 							<div>
-								<label class="mb-1 block text-sm font-medium text-foreground" for="CustomerName"
+								<label class="mb-1 block text-sm font-medium text-foreground" for="customername"
 									>Full Name</label
 								>
 								<Input
@@ -523,12 +704,12 @@
 									bind:value={customerName}
 									placeholder="Juan Dela Cruz"
 									class="w-full"
-									name="CustomerName"
+									name="customername"
 								/>
 							</div>
 
 							<div>
-								<label class="mb-1 block text-sm font-medium text-foreground" for="CustomerEmail"
+								<label class="mb-1 block text-sm font-medium text-foreground" for="customeremail"
 									>Email</label
 								>
 								<Input
@@ -536,12 +717,12 @@
 									bind:value={customerEmail}
 									placeholder="juan@example.com"
 									class="w-full"
-									name="CustomerEmail"
+									name="customeremail"
 								/>
 							</div>
 
 							<div>
-								<label class="mb-1 block text-sm font-medium text-foreground" for="Telephone"
+								<label class="mb-1 block text-sm font-medium text-foreground" for="customerphone"
 									>Phone</label
 								>
 								<Input
@@ -549,40 +730,79 @@
 									bind:value={customerPhone}
 									placeholder="+63 912 345 6789"
 									class="w-full"
-									name="Telephone"
+									name="customerphone"
+								/>
+							</div>
+
+							<div>
+								<label class="mb-1 block text-sm font-medium text-foreground" for="customeraddress"
+									>Home Address</label
+								>
+								<Input
+									type="text"
+									bind:value={customerAddress}
+									placeholder="123 Main Street, City, Province"
+									class="w-full"
+									name="customeraddress"
 								/>
 							</div>
 
 							<div>
 								<span class="mb-2 block text-sm font-medium text-foreground">Payment Method</span>
 								<div class="space-y-2">
-									<Button
-										onclick={() => (paymentMethod = 'EWALLET')}
+									<button
+										onclick={() => (paymentMethod = 'GCASH')}
 										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
-										'EWALLET'
+										'GCASH'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">E-Wallet (GCash, PayMaya)</span>
-										{#if paymentMethod === 'EWALLET'}
+										<span class="font-medium text-foreground">GCash</span>
+										{#if paymentMethod === 'GCASH'}
 											<span class="text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
-									</Button>
+									</button>
 
-									<Button
-										onclick={() => (paymentMethod = 'VIRTUAL_ACCOUNT')}
+									<button
+										onclick={() => (paymentMethod = 'PAYMAYA')}
 										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
-										'VIRTUAL_ACCOUNT'
+										'PAYMAYA'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">Bank Transfer</span>
-										{#if paymentMethod === 'VIRTUAL_ACCOUNT'}
+										<span class="font-medium text-foreground">Maya</span>
+										{#if paymentMethod === 'PAYMAYA'}
 											<span class="text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
-									</Button>
+									</button>
 
-									<Button
+									<button
+										onclick={() => (paymentMethod = 'GRABPAY')}
+										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										'GRABPAY'
+											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+											: 'border-gray-200 bg-background dark:border-gray-700'}"
+									>
+										<span class="font-medium text-foreground">GrabPay</span>
+										{#if paymentMethod === 'GRABPAY'}
+											<span class="text-blue-600 dark:text-blue-400">✓</span>
+										{/if}
+									</button>
+
+									<button
+										onclick={() => (paymentMethod = 'SHOPEEPAY')}
+										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										'SHOPEEPAY'
+											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+											: 'border-gray-200 bg-background dark:border-gray-700'}"
+									>
+										<span class="font-medium text-foreground">ShopeePay</span>
+										{#if paymentMethod === 'SHOPEEPAY'}
+											<span class="text-blue-600 dark:text-blue-400">✓</span>
+										{/if}
+									</button>
+
+									<button
 										onclick={() => (paymentMethod = 'CREDIT_CARD')}
 										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'CREDIT_CARD'
@@ -593,7 +813,7 @@
 										{#if paymentMethod === 'CREDIT_CARD'}
 											<span class="text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
-									</Button>
+									</button>
 								</div>
 							</div>
 						</div>

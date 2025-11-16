@@ -1,38 +1,66 @@
-// src/hooks.server.ts
-import type { Handle } from '@sveltejs/kit';
-import { supabase } from '$lib/server/supabase';
+import { redirect, type Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 
-export const handle: Handle = async ({ event, resolve }) => {
-	// List of public routes that don't require authentication
+const authGuard: Handle = async ({ event, resolve }) => {
 	const publicRoutes = [
+		'/',
 		'/login',
 		'/Signup',
 		'/forgot-password',
 		'/reset-password',
-		'/Reports',
 		'/api/auth/login',
 		'/api/auth/Signup',
-		'/api/auth/forgot-password',
-		'/api/auth/reset-password',
-		'/api/reports/submit',
-		'/User/Report'
+		'/api/auth/user',
+		'/api/auth/logout',
+		'/api/products',
+		'/api/create-payment',
+		'/payment-success'
 	];
 
-	// Check if current path is public
-	const isPublicRoute = publicRoutes.some((route) => event.url.pathname.startsWith(route));
+	const isPublicRoute = publicRoutes.some(
+		(route) => event.url.pathname === route || event.url.pathname.startsWith(route + '/')
+	);
 
-	// Only check authentication for non-public routes
-	if (!isPublicRoute) {
-		const userId = event.cookies.get('userId');
+	const userEmail = event.cookies.get('userEmail');
+	const userId = event.cookies.get('userId');
+	const isAuthenticated = !!(userEmail && userId);
+	const userRole = event.cookies.get('userRole') || 'user';
 
-		if (userId) {
-			const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+	if (!isPublicRoute && !isAuthenticated) {
+		console.log('🔒 Auth guard: Redirecting to login from', event.url.pathname);
+		throw redirect(302, `/login?redirectTo=${encodeURIComponent(event.url.pathname)}`);
+	}
 
-			event.locals.user = user || null;
+	const adminRoutes = ['/Dashboard', '/Inventory', '/Reports'];
+
+	const isAdminRoute = adminRoutes.some(
+		(route) => event.url.pathname === route || event.url.pathname.startsWith(route + '/')
+	);
+
+	if (isAdminRoute && isAuthenticated && userRole !== 'admin') {
+		console.log('🚫 Admin access denied for user:', userEmail);
+		throw redirect(302, '/User/Shop');
+	}
+
+	const userRoutes = ['/User/Shop', '/User/Report'];
+
+	const isUserRoute = userRoutes.some(
+		(route) => event.url.pathname === route || event.url.pathname.startsWith(route + '/')
+	);
+
+	if (isUserRoute && !isAuthenticated) {
+		throw redirect(302, `/login?redirectTo=${encodeURIComponent(event.url.pathname)}`);
+	}
+
+	if ((event.url.pathname === '/login' || event.url.pathname === '/signup') && isAuthenticated) {
+		if (userRole === 'admin') {
+			throw redirect(302, '/Dashboard');
 		} else {
-			event.locals.user = null;
+			throw redirect(302, '/User/Shop');
 		}
 	}
 
 	return resolve(event);
 };
+
+export const handle = sequence(authGuard);

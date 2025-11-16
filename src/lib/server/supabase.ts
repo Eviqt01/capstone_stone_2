@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_SERVICE_KEY } from '$env/static/private';
+import { env } from './env';
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+	console.error('❌ Missing Supabase environment variables!');
+	console.error('SUPABASE_URL:', env.SUPABASE_URL);
+	console.error('SUPABASE_KEY length:', env.SUPABASE_SERVICE_ROLE_KEY?.length);
 	throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-	auth: {
-		autoRefreshToken: false,
-		persistSession: false
-	}
-});
+console.log('✅ Supabase client initialized successfully');
+
+export const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

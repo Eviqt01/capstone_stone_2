@@ -10,8 +10,13 @@
 		issueCategory: '',
 		priority: '',
 		orderNumber: '',
-		description: ''
+		description: '',
+		homeAddress: ''
 	});
+
+	const returnShop = () => {
+		goto('/User/Shop');
+	};
 
 	let error = $state('');
 	let success = $state('');
@@ -68,7 +73,8 @@
 					issueCategory: formData.issueCategory,
 					priority: formData.priority,
 					orderNumber: formData.orderNumber,
-					description: formData.description
+					description: formData.description,
+					homeAddress: formData.homeAddress
 				})
 			});
 
@@ -88,7 +94,8 @@
 				issueCategory: '',
 				priority: '',
 				orderNumber: '',
-				description: ''
+				description: '',
+				homeAddress: ''
 			};
 
 			setTimeout(() => {
@@ -106,7 +113,7 @@
 <section class="flex min-h-screen items-center justify-center p-4">
 	<form
 		on:submit|preventDefault={handleSubmit}
-		class="flex w-full max-w-2xl flex-col gap-7 rounded-md border p-10 shadow-md"
+		class="flex w-full max-w-2xl flex-col gap-5 rounded-md border p-10 shadow-md"
 	>
 		<div class="flex flex-col items-center gap-2">
 			<h1 class="text-xl font-bold">Report a Problem</h1>
@@ -190,6 +197,16 @@
 			</div>
 		</div>
 
+		<div class="flex flex-1 flex-col gap-1">
+			<h1 class="text-sm">Home Address</h1>
+			<Input
+				bind:value={formData.homeAddress}
+				class="w-full px-4 py-3"
+				type="text"
+				placeholder="Enter your home address"
+			/>
+		</div>
+
 		<div class="flex flex-col gap-1">
 			<h1 class="text-sm">Order Number (if applicable)</h1>
 			<Input
@@ -210,12 +227,20 @@
 			></textarea>
 		</div>
 
-		<Button
-			class="cursor-pointer bg-blue-700 font-bold hover:bg-blue-800 active:scale-95"
-			type="submit"
-			disabled={loading}
-		>
-			{loading ? 'Submitting...' : 'Submit Report'}
-		</Button>
+		<div class="flex flex-col gap-2">
+			<Button
+				class="cursor-pointer bg-blue-700 font-bold hover:bg-blue-800 active:scale-95"
+				type="submit"
+				disabled={loading}
+			>
+				{loading ? 'Submitting...' : 'Submit Report'}
+			</Button>
+			<Button
+				class="cursor-pointer bg-gray-500 font-bold hover:bg-gray-800 active:scale-95"
+				onclick={returnShop}
+			>
+				Back to Shop
+			</Button>
+		</div>
 	</form>
 </section>

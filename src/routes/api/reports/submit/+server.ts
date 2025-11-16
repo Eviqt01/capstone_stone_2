@@ -6,6 +6,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const body = await request.json();
 
+		// Validate required fields
 		if (
 			!body.customerName ||
 			!body.customerEmail ||
@@ -13,51 +14,49 @@ export const POST: RequestHandler = async ({ request }) => {
 			!body.priority ||
 			!body.description
 		) {
-			return json({ error: 'All required fields must be filled' }, { status: 400 });
+			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		const priorityLevel = body.priority.split(' - ')[0];
+		console.log('Submitting new report:', body);
 
-		const { count } = await supabase
+		// Generate a report number
+		const reportNumber = 'RPT-' + Date.now();
+
+		// Insert into database
+		const { data, error } = await supabase
 			.from('customer_reports')
-			.select('*', { count: 'exact', head: true });
-
-		const reportNumber = `#${String((count || 0) + 12345).padStart(5, '0')}`;
-
-		console.log('Creating report:', reportNumber);
-
-		const { data: newReport, error } = await supabase
-			.from('customer_reports')
-			.insert({
-				report_number: reportNumber,
-				customer_name: body.customerName,
-				customer_email: body.customerEmail,
-				issue_category: body.issueCategory,
-				priority: priorityLevel,
-				order_number: body.orderNumber || null,
-				description: body.description,
-				status: 'New'
-			})
+			.insert([
+				{
+					customer_name: body.customerName,
+					customer_email: body.customerEmail,
+					issue_category: body.issueCategory,
+					priority: body.priority,
+					order_number: body.orderNumber || null,
+					description: body.description,
+					home_address: body.homeAddress || null,
+					report_number: reportNumber,
+					status: 'New',
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString()
+				}
+			])
 			.select()
 			.single();
 
 		if (error) {
-			console.error('Database error:', error);
-			return json({ error: 'Failed to submit report: ' + error.message }, { status: 500 });
+			console.error('Database error creating report:', error);
+			return json({ error: 'Failed to create report: ' + error.message }, { status: 500 });
 		}
 
-		console.log('Report created:', newReport);
+		console.log('Report created successfully:', data);
 
-		return json(
-			{
-				success: true,
-				message: 'Report submitted successfully',
-				report: newReport
-			},
-			{ status: 201 }
-		);
+		return json({
+			success: true,
+			message: 'Report submitted successfully',
+			report: data
+		});
 	} catch (err) {
-		console.error('Submit error:', err);
+		console.error('Submit report error:', err);
 		return json(
 			{
 				error: err instanceof Error ? err.message : 'Server error'

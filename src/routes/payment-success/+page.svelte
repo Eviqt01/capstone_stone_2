@@ -4,7 +4,7 @@
 
 	onMount(() => {
 		setTimeout(() => {
-			goto('User/Shop');
+			goto('/User/Shop');
 		}, 5000);
 	});
 </script>
@@ -28,7 +28,7 @@
 		<h1 class="mb-2 text-3xl font-bold text-gray-800">Payment Successful!</h1>
 		<p class="mb-6 text-gray-600">Thank you for your purchase. Your order has been confirmed.</p>
 		<a
-			href="User/Shop"
+			href="/User/Shop"
 			class="inline-block rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-blue-600 hover:to-blue-700"
 		>
 			Back to Store

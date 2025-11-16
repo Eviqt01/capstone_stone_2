@@ -4,16 +4,12 @@
 	import Menu_2 from '@tabler/icons-svelte/icons/menu-2';
 	import IconX from '@tabler/icons-svelte/icons/x';
 	import Dashboard from '@tabler/icons-svelte/icons/dashboard';
-	import ShoppingCart from '@tabler/icons-svelte/icons/shopping-cart';
-	import BrandProducthunt from '@tabler/icons-svelte/icons/brand-producthunt';
-	import User from '@tabler/icons-svelte/icons/user';
-	import ChartBar from '@tabler/icons-svelte/icons/chart-bar';
-	import BuildingWarehouse from '@tabler/icons-svelte/icons/building-warehouse';
+	import BrandMinecraft from '@tabler/icons-svelte/icons/brand-minecraft';
 	import Report from '@tabler/icons-svelte/icons/report';
 	import ReportMedical from '@tabler/icons-svelte/icons/report-medical';
 	import Hourglass from '@tabler/icons-svelte/icons/hourglass';
 	import Checks from '@tabler/icons-svelte/icons/checks';
-	import Settings from '@tabler/icons-svelte/icons/settings';
+	import Trash from '@tabler/icons-svelte/icons/trash';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { goto } from '$app/navigation';
 
@@ -28,14 +24,41 @@
 	let loading = $state(true);
 	let error = $state('');
 
+	// Add these variables for user data
+	let userEmail = $state('');
+	let userRole = $state('');
+
 	let showModal = $state(false);
 	let selectedReport = $state<any>(null);
 	let adminResponse = $state('');
 	let savingResponse = $state(false);
 
+	// Add state for delete confirmation
+	let showDeleteModal = $state(false);
+	let reportToDelete = $state<any>(null);
+	let deleting = $state(false);
+
 	const handleMenuClick = (event: Event) => {
 		event?.stopPropagation();
 	};
+
+	const menubar = [
+		{
+			label: 'Dashboard',
+			href: '/Dashboard',
+			image: Dashboard
+		},
+		{
+			label: 'Inventory',
+			href: '/Inventory',
+			image: BrandMinecraft
+		},
+		{
+			label: 'Reports',
+			href: '/Reports',
+			image: Report
+		}
+	];
 
 	const status = [
 		{ value: 'All Status', label: 'All Status' },
@@ -53,10 +76,10 @@
 
 	const priorities = [
 		{ valuePrio: 'All Priority', label: 'All Priority' },
-		{ valuePrio: 'Urgent', label: 'Urgent' },
-		{ valuePrio: 'High', label: 'High' },
-		{ valuePrio: 'Medium', label: 'Medium' },
-		{ valuePrio: 'Low', label: 'Low' }
+		{ valuePrio: 'Urgent - Critical Problem', label: 'Urgent - Critical Problem' },
+		{ valuePrio: 'High - Urgent Issue', label: 'High - Urgent Issue' },
+		{ valuePrio: 'Medium - Standard Issue', label: 'Medium - Standard Issue' },
+		{ valuePrio: 'Low - General Inquiry', label: 'Low - General Inquiry' }
 	];
 
 	let valuePrio = $state('All Priority');
@@ -64,6 +87,30 @@
 	const triggerContentPrio = $derived(
 		priorities.find((p) => p.valuePrio === valuePrio)?.label ?? 'Select a Priority'
 	);
+
+	// Add this function to load user data
+	async function loadUserData() {
+		try {
+			const response = await fetch('/api/auth/user');
+			if (response.ok) {
+				const userData = await response.json();
+				userEmail = userData.email || '';
+				userRole = userData.role || '';
+
+				if (userEmail) {
+					sessionStorage.setItem('userEmail', userEmail);
+					sessionStorage.setItem('userRole', userRole);
+				}
+			} else {
+				userEmail = sessionStorage.getItem('userEmail') || '';
+				userRole = sessionStorage.getItem('userRole') || '';
+			}
+		} catch (error) {
+			console.error('Error loading user data:', error);
+			userEmail = sessionStorage.getItem('userEmail') || '';
+			userRole = sessionStorage.getItem('userRole') || '';
+		}
+	}
 
 	async function fetchReports() {
 		loading = true;
@@ -107,6 +154,52 @@
 			}
 		} catch (err) {
 			console.error('Error updating report:', err);
+		}
+	}
+
+	// ADD DELETE REPORT FUNCTION
+	async function deleteReport(reportId: number) {
+		deleting = true;
+		try {
+			const res = await fetch(`/api/reports/${reportId}`, {
+				method: 'DELETE'
+			});
+
+			const data = await res.json();
+
+			if (res.ok) {
+				// Remove the report from the local state
+				reports = reports.filter((report) => report.id !== reportId);
+				// Update stats
+				stats.total = Math.max(0, stats.total - 1);
+				// Close delete modal
+				closeDeleteModal();
+				alert('Report deleted successfully!');
+			} else {
+				alert(data.error || 'Failed to delete report');
+			}
+		} catch (err) {
+			console.error('Error deleting report:', err);
+			alert('Failed to delete report');
+		} finally {
+			deleting = false;
+		}
+	}
+
+	// ADD DELETE MODAL FUNCTIONS
+	function openDeleteModal(report: any) {
+		reportToDelete = report;
+		showDeleteModal = true;
+	}
+
+	function closeDeleteModal() {
+		showDeleteModal = false;
+		reportToDelete = null;
+	}
+
+	function confirmDelete() {
+		if (reportToDelete) {
+			deleteReport(reportToDelete.id);
 		}
 	}
 
@@ -171,13 +264,13 @@
 
 	function getPriorityColor(priority: string) {
 		switch (priority) {
-			case 'Urgent':
+			case 'Urgent - Critical Problem':
 				return 'bg-red-100 text-red-700';
-			case 'High':
+			case 'High - Urgent Issue':
 				return 'bg-orange-100 text-orange-700';
-			case 'Medium':
+			case 'Medium - Standard Issue':
 				return 'bg-yellow-100 text-yellow-700';
-			case 'Low':
+			case 'Low - General Inquiry':
 				return 'bg-green-100 text-green-700';
 			default:
 				return 'bg-gray-100 text-gray-700';
@@ -197,6 +290,9 @@
 	}
 
 	onMount(() => {
+		// Load user data first
+		loadUserData();
+		// Then load reports
 		fetchReports();
 	});
 
@@ -224,6 +320,55 @@
 				{/if}
 			</Button>
 			<h1 class="text-xl font-bold">Customer Support</h1>
+			{#if MenuOpen}
+				<section
+					class="absolute top-13 -left-1 z-50 flex min-h-screen w-120 max-w-60 animate-in flex-col justify-center rounded-r-sm bg-gray-800 px-1 py-5 duration-300 slide-in-from-left"
+				>
+					<div class="flex flex-col items-center gap-2 p-2">
+						<h1 class="text-xl font-bold text-white">Admin Panel</h1>
+						<hr class="w-full border border-gray-700 bg-gray-800" />
+					</div>
+					<ul class="mb-auto animate-in duration-300 slide-in-from-left">
+						{#each menubar as MenuBar}
+							<li>
+								<a
+									href={MenuBar.href}
+									class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+								>
+									<MenuBar.image class="mr-3 h-5 w-5" />
+									{MenuBar.label}
+								</a>
+							</li>
+						{/each}
+					</ul>
+
+					<div class="absolute right-0 bottom-0 left-0 border-t border-gray-700 bg-gray-800 p-4">
+						<div class="flex items-center">
+							<div class="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+								<span class="text-sm font-medium text-white">
+									{userEmail ? userEmail.charAt(0).toUpperCase() : 'A'}
+								</span>
+							</div>
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-xs font-medium text-white">
+									{#if userEmail}
+										{userEmail}
+									{:else}
+										Loading...
+									{/if}
+								</p>
+								<p class="truncate text-xs text-gray-400">
+									{#if userRole}
+										{userRole === 'admin' ? 'Administrator' : 'User'}
+									{:else}
+										Admin
+									{/if}
+								</p>
+							</div>
+						</div>
+					</div>
+				</section>
+			{/if}
 		</div>
 		<Button
 			class="cursor-pointer bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 active:scale-95"
@@ -388,6 +533,13 @@
 												</Select.Group>
 											</Select.Content>
 										</Select.Root>
+										<!-- ADD DELETE BUTTON -->
+										<Button
+											class="bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
+											onclick={() => openDeleteModal(report)}
+										>
+											<Trash class="h-3 w-3" />
+										</Button>
 									</div>
 								</div>
 
@@ -395,6 +547,10 @@
 									<p><strong>Customer:</strong> {report.customer_name} ({report.customer_email})</p>
 									{#if report.order_number}
 										<p><strong>Order:</strong> {report.order_number}</p>
+									{/if}
+									<!-- ADD HOME ADDRESS TO REPORT LIST -->
+									{#if report.home_address}
+										<p><strong>Home Address:</strong> {report.home_address}</p>
 									{/if}
 								</div>
 
@@ -411,103 +567,6 @@
 				{/if}
 			</div>
 		</div>
-
-		{#if MenuOpen}
-			<section
-				class="absolute top-0 flex min-h-screen w-120 max-w-60 animate-in flex-col justify-center rounded-r-sm bg-gray-800 px-1 py-5 duration-300 slide-in-from-left"
-			>
-				<div class="flex flex-col items-center gap-2 p-2">
-					<h1 class="text-xl font-bold text-white">Admin Panel</h1>
-					<hr class="w-full border border-gray-700 bg-gray-800" />
-				</div>
-				<ul class="mb-auto animate-in duration-300 slide-in-from-left">
-					<li>
-						<a
-							href="/Dashboard"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<Dashboard class="mr-3"></Dashboard>
-							Dashboard
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Users"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<User class="mr-3"></User>
-							Users
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Products"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<BrandProducthunt class="mr-3"></BrandProducthunt>
-							Products
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Orders"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<ShoppingCart class="mr-3"></ShoppingCart>
-							Orders
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Analytics"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<ChartBar class="mr-3"></ChartBar>
-							Analytics
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Inventory"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<BuildingWarehouse class="mr-3"></BuildingWarehouse>
-							Inventory
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Reports"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<Report class="mr-3"></Report>
-							Reports
-						</a>
-					</li>
-					<li>
-						<a
-							href="/Settings"
-							class="flex cursor-pointer items-center rounded-lg px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-						>
-							<Settings class="mr-3"></Settings>
-							Settings
-						</a>
-					</li>
-				</ul>
-
-				<div class="absolute right-0 bottom-0 left-0 border-t border-gray-700 bg-gray-800 p-4">
-					<div class="flex items-center">
-						<div class="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-600">
-							<span class="text-sm font-medium text-white">A</span>
-						</div>
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium text-white">Admin User</p>
-							<p class="truncate text-xs text-gray-400">admin@example.com</p>
-						</div>
-					</div>
-				</div>
-			</section>
-		{/if}
 	</div>
 
 	{#if showModal && selectedReport}
@@ -549,6 +608,10 @@
 						<div class="space-y-1 text-sm">
 							<p><strong>Name:</strong> {selectedReport.customer_name}</p>
 							<p><strong>Email:</strong> {selectedReport.customer_email}</p>
+							<!-- ADD HOME ADDRESS TO MODAL -->
+							{#if selectedReport.home_address}
+								<p><strong>Home Address:</strong> {selectedReport.home_address}</p>
+							{/if}
 							{#if selectedReport.order_number}
 								<p><strong>Order Number:</strong> {selectedReport.order_number}</p>
 							{/if}
@@ -587,6 +650,75 @@
 						disabled={savingResponse}
 					>
 						{savingResponse ? 'Saving...' : 'Save Response'}
+					</Button>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Delete Confirmation Modal -->
+	{#if showDeleteModal && reportToDelete}
+		<div
+			class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-800 p-4 opacity-95"
+		>
+			<div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+				<div class="mb-4 flex items-center gap-3">
+					<div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+						<Trash class="h-6 w-6 text-red-600" />
+					</div>
+					<div>
+						<h2 class="text-xl font-bold text-gray-900">Delete Report</h2>
+						<p class="text-sm text-gray-600">This action cannot be undone</p>
+					</div>
+				</div>
+
+				<div class="mb-6 rounded-lg bg-red-50 p-4">
+					<p class="text-sm text-red-800">
+						Are you sure you want to delete report <strong>{reportToDelete.report_number}</strong>
+						from
+						<strong>{reportToDelete.customer_name}</strong>?
+					</p>
+					<p class="mt-2 text-xs text-red-700">
+						This will permanently remove the report and all its data from the system.
+					</p>
+				</div>
+
+				<div class="flex justify-end gap-3">
+					<Button
+						class="cursor-pointer bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400 active:scale-95"
+						onclick={closeDeleteModal}
+						disabled={deleting}
+					>
+						Cancel
+					</Button>
+					<Button
+						class="cursor-pointer bg-red-600 px-4 py-2 text-white hover:bg-red-700 active:scale-95"
+						onclick={confirmDelete}
+						disabled={deleting}
+					>
+						{#if deleting}
+							<span class="flex items-center gap-2">
+								<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+										fill="none"
+									/>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									/>
+								</svg>
+								Deleting...
+							</span>
+						{:else}
+							Delete Report
+						{/if}
 					</Button>
 				</div>
 			</div>

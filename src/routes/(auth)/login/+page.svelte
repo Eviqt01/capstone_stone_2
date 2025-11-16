@@ -4,16 +4,25 @@
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
 	const gotoForgotPassword = () => {
 		goto('/forgot-password');
 	};
 
-	let email = '';
-	let password = '';
-	let rememberMe = false;
-	let error = '';
-	let loading = false;
+	let email = $state('');
+	let password = $state('');
+	let rememberMe = $state(false);
+	let error = $state('');
+	let loading = $state(false);
+	let redirectTo = $state('');
+
+	onMount(() => {
+		// Get redirect URL from query parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		redirectTo = urlParams.get('redirectTo') || '';
+		console.log('🔀 Redirect target:', redirectTo);
+	});
 
 	async function handleLogin() {
 		loading = true;
@@ -37,10 +46,22 @@
 				return;
 			}
 
+			// Clear any existing session storage first
+			sessionStorage.clear();
+
+			// Store NEW user data in session storage
+			sessionStorage.setItem('userEmail', data.user.email);
+			sessionStorage.setItem('userRole', data.user.role);
+			sessionStorage.setItem('userId', data.user.id);
+
+			console.log('✅ Login successful - User:', data.user.email);
+			console.log('🎯 Redirecting to:', redirectTo || 'default route');
+
+			// Redirect based on role and redirect parameter
 			if (data.user.role === 'admin') {
-				goto('/Dashboard');
+				goto(redirectTo || '/Dashboard');
 			} else {
-				goto('/User/Shop');
+				goto(redirectTo || '/User/Shop');
 			}
 		} catch (err) {
 			error = 'An error occurred. Please try again.';
@@ -57,6 +78,13 @@
 		on:submit|preventDefault={handleLogin}
 	>
 		<h1 class="text-center text-xl font-bold sm:text-2xl">Sign in to your account</h1>
+
+		{#if redirectTo}
+			<div class="rounded-md bg-blue-50 p-3 text-center">
+				<p class="text-sm text-blue-700">Please log in to access the requested page</p>
+			</div>
+		{/if}
+
 		<div class="flex flex-col flex-wrap gap-2">
 			<Label>Email Address</Label>
 			<Input
@@ -81,7 +109,7 @@
 		</div>
 		<div class="flex items-center justify-center">
 			<div class="mr-auto flex items-center gap-1">
-				<Checkbox></Checkbox>
+				<Checkbox bind:checked={rememberMe} />
 				<Label class="text-sm sm:text-base">Remember Me</Label>
 			</div>
 			<Label

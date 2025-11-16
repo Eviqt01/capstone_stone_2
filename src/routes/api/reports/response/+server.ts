@@ -1,4 +1,3 @@
-// src/routes/api/reports/response/+server.ts
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { supabase } from '$lib/server/supabase';
