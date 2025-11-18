@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		// Send email using Resend
 		const { data, error } = await resend.emails.send({
-			from: 'onboarding@resend.dev',
+			from: 'Laveona <onboarding@resend.dev>',
 			to: to,
 			subject: subject,
 			html: htmlContent,
