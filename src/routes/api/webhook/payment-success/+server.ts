@@ -40,167 +40,19 @@ interface EmailResponse {
 	success: boolean;
 	error?: string;
 	message?: string;
-	emailId?: string;
-}
-
-interface EmailPayload {
-	to: string;
-	subject: string;
-	orderData: {
-		orderId: string;
-		paymentMethod: string;
-		status: string;
-		paidAmount: number;
-		paidAt: string;
-		customer_name: string;
-		customer_email: string;
-		customer_phone: string;
-		customer_address: string;
-		total: number;
-		items: OrderItem[];
-	};
-	customerName: string;
-	paymentStatus: string;
-}
-
-// ==================== EMAIL FUNCTION ====================
-async function sendOrderReceiptEmail(
-	orderData: DatabaseOrder & {
-		orderId: string;
-		paymentMethod: string;
-		paidAmount: number;
-		paidAt: string;
-	},
-	customerEmail: string,
-	customerName: string
-): Promise<EmailResponse> {
-	try {
-		const emailPayload: EmailPayload = {
-			to: customerEmail,
-			subject: `Order Confirmation - #${orderData.orderId}`,
-			orderData: {
-				orderId: orderData.orderId,
-				paymentMethod: orderData.paymentMethod,
-				status: 'PAID',
-				paidAmount: orderData.paidAmount,
-				paidAt: orderData.paidAt,
-				customer_name: orderData.customer_name,
-				customer_email: orderData.customer_email,
-				customer_phone: orderData.customer_phone,
-				customer_address: orderData.customer_address,
-				total: orderData.total,
-				items: orderData.items
-			},
-			customerName: customerName,
-			paymentStatus: 'PAID'
-		};
-
-		console.log('🎉 Sending SUCCESSFUL payment email to:', customerEmail);
-		console.log('💰 Payment confirmed for order:', orderData.orderId);
-
-		const response = await fetch(
-			`${process.env.ORIGIN || 'http://localhost:5173'}/api/email/send`,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(emailPayload)
-			}
-		);
-
-		if (!response.ok) {
-			throw new Error(`Email API responded with status: ${response.status}`);
-		}
-
-		const result: EmailResponse = await response.json();
-
-		if (result.success) {
-			console.log('✅ Order receipt email sent for SUCCESSFUL payment');
-			await recordActivity(`Order receipt sent to ${customerEmail}`, 'email_sent', 'green');
-		} else {
-			console.error('❌ Failed to send successful payment email:', result.error);
-			await recordActivity(`Failed to send email to ${customerEmail}`, 'email_error', 'red');
-		}
-
-		return result;
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		console.error('Error sending successful payment email:', errorMessage);
-		await recordActivity(`Email service error: ${errorMessage}`, 'email_error', 'red');
-		return {
-			success: false,
-			error: 'Email service unavailable'
-		};
-	}
-}
-
-// ==================== ACTIVITY LOGGING ====================
-async function recordActivity(
-	message: string,
-	type: string = 'webhook',
-	color: string = 'blue'
-): Promise<boolean> {
-	try {
-		const { error } = await supabase.from('activities').insert([
-			{
-				message,
-				type,
-				color
-			}
-		]);
-
-		if (error) {
-			console.error('Failed to record activity:', error);
-			return false;
-		}
-
-		return true;
-	} catch (e) {
-		const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-		console.error('Failed to record activity:', errorMessage);
-		return false;
-	}
-}
-
-// ==================== STOCK MANAGEMENT ====================
-async function restoreStockForItems(items: OrderItem[]): Promise<void> {
-	try {
-		for (const item of items) {
-			const { data: product, error } = await supabase
-				.from('products')
-				.select('stock')
-				.eq('id', item.id)
-				.single();
-
-			if (error) {
-				console.error(`Error fetching product ${item.id}:`, error);
-				continue;
-			}
-
-			if (product) {
-				const { error: updateError } = await supabase
-					.from('products')
-					.update({ stock: (product.stock || 0) + item.quantity })
-					.eq('id', item.id);
-
-				if (updateError) {
-					console.error(`Error restoring stock for product ${item.id}:`, updateError);
-				} else {
-					console.log(`🔄 Restored ${item.quantity} stock for product ${item.id}`);
-				}
-			}
-		}
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-		console.error('Error restoring stock:', errorMessage);
-	}
+	messageId?: string;
 }
 
 // ==================== MAIN WEBHOOK HANDLER ====================
 export const POST: RequestHandler = async ({ request }) => {
+	console.log('🔔 WEBHOOK CALLED - Time:', new Date().toISOString());
+	console.log('🔔 Request headers:', Object.fromEntries(request.headers));
+
 	try {
-		const webhookData: XenditWebhookPayload = await request.json();
+		const body = await request.text();
+		console.log('🔔 Raw webhook body:', body);
+
+		const webhookData: XenditWebhookPayload = JSON.parse(body);
 
 		console.log('🔄 Webhook received:', {
 			external_id: webhookData.external_id,
@@ -218,19 +70,21 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		if (error || !order) {
 			console.error('❌ Order not found for webhook:', webhookData.external_id);
+			console.error('❌ Supabase error:', error);
 			await recordActivity(
 				`Webhook error: Order not found for ${webhookData.external_id}`,
 				'webhook_error',
 				'red'
 			);
-			return json({ success: false, error: 'orders not found' }, { status: 404 }); // ← CHANGED HERE
+			return json({ success: false, error: 'Order not found' }, { status: 404 });
 		}
 
 		console.log('📦 Order found:', order.id, 'Current status:', order.status);
+		console.log('📧 Order customer email:', order.customer_email);
 
 		// ✅ PROCESS SUCCESSFUL PAYMENTS
 		if (webhookData.status === 'PAID') {
-			// Update order status to "PAID"
+			// Update order status to "Completed"
 			const { error: updateError } = await supabase
 				.from('orders')
 				.update({
@@ -239,25 +93,19 @@ export const POST: RequestHandler = async ({ request }) => {
 					payment_method: webhookData.payment_method
 				})
 				.eq('invoice_id', webhookData.external_id);
+
 			if (updateError) {
 				console.error('❌ Failed to update order status:', updateError);
 				await recordActivity(`Failed to update order ${order.id} to PAID`, 'webhook_error', 'red');
 				return json({ success: false, error: 'Failed to update order' }, { status: 500 });
 			}
 
-			console.log('✅ Order status updated to PAID:', order.id);
+			console.log('✅ Order status updated to Completed:', order.id);
 
 			// ✅ NOW send the email - payment is confirmed!
 			const emailResult: EmailResponse = await sendOrderReceiptEmail(
-				{
-					...order,
-					orderId: order.id,
-					paymentMethod: webhookData.payment_method,
-					paidAmount: webhookData.paid_amount,
-					paidAt: webhookData.paid_at || new Date().toISOString()
-				},
-				order.customer_email,
-				order.customer_name
+				order,
+				webhookData.payment_method
 			);
 
 			// Log email result
@@ -333,3 +181,139 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 	}
 };
+
+// ==================== EMAIL FUNCTION ====================
+async function sendOrderReceiptEmail(
+	order: DatabaseOrder,
+	paymentMethod: string
+): Promise<EmailResponse> {
+	try {
+		// Create the email payload that matches your NEW email endpoint structure
+		const emailPayload = {
+			to: order.customer_email,
+			subject: `Order Confirmation - #${order.id}`,
+			orderData: {
+				orderId: order.id,
+				paymentMethod: paymentMethod,
+				totalAmount: order.total,
+				items: order.items.map((item) => ({
+					name: item.name,
+					price: item.price,
+					quantity: item.quantity
+				})),
+				customer: {
+					address: order.customer_address
+				}
+			},
+			customerName: order.customer_name
+		};
+
+		console.log('🎉 Sending SUCCESSFUL payment email to:', order.customer_email);
+		console.log('💰 Payment confirmed for order:', order.id);
+		console.log('📤 Email payload:', JSON.stringify(emailPayload, null, 2));
+
+		// Use the correct URL based on environment
+		const emailApiUrl =
+			process.env.NODE_ENV === 'production'
+				? 'https://capstone-project-laveona.onrender.com/api/email/send'
+				: 'http://localhost:5173/api/email/send';
+
+		console.log('🌐 Calling email API:', emailApiUrl);
+
+		const response = await fetch(emailApiUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(emailPayload)
+		});
+
+		console.log('📨 Email API response status:', response.status);
+
+		if (!response.ok) {
+			throw new Error(`Email API responded with status: ${response.status}`);
+		}
+
+		const result: EmailResponse = await response.json();
+
+		if (result.success) {
+			console.log('✅ Order receipt email sent for SUCCESSFUL payment');
+			await recordActivity(`Order receipt sent to ${order.customer_email}`, 'email_sent', 'green');
+		} else {
+			console.error('❌ Failed to send successful payment email:', result.error);
+			await recordActivity(`Failed to send email to ${order.customer_email}`, 'email_error', 'red');
+		}
+
+		return result;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('Error sending successful payment email:', errorMessage);
+		await recordActivity(`Email service error: ${errorMessage}`, 'email_error', 'red');
+		return {
+			success: false,
+			error: 'Email service unavailable'
+		};
+	}
+}
+
+// ==================== ACTIVITY LOGGING ====================
+async function recordActivity(
+	message: string,
+	type: string = 'webhook',
+	color: string = 'blue'
+): Promise<boolean> {
+	try {
+		const { error } = await supabase.from('activities').insert([
+			{
+				message,
+				type,
+				color
+			}
+		]);
+
+		if (error) {
+			console.error('Failed to record activity:', error);
+			return false;
+		}
+
+		return true;
+	} catch (e) {
+		const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+		console.error('Failed to record activity:', errorMessage);
+		return false;
+	}
+}
+
+// ==================== STOCK MANAGEMENT ====================
+async function restoreStockForItems(items: OrderItem[]): Promise<void> {
+	try {
+		for (const item of items) {
+			const { data: product, error } = await supabase
+				.from('products')
+				.select('stock')
+				.eq('id', item.id)
+				.single();
+
+			if (error) {
+				console.error(`Error fetching product ${item.id}:`, error);
+				continue;
+			}
+
+			if (product) {
+				const { error: updateError } = await supabase
+					.from('products')
+					.update({ stock: (product.stock || 0) + item.quantity })
+					.eq('id', item.id);
+
+				if (updateError) {
+					console.error(`Error restoring stock for product ${item.id}:`, updateError);
+				} else {
+					console.log(`🔄 Restored ${item.quantity} stock for product ${item.id}`);
+				}
+			}
+		}
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		console.error('Error restoring stock:', errorMessage);
+	}
+}

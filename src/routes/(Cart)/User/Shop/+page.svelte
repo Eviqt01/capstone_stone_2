@@ -326,7 +326,7 @@
 
 			if (response.ok && data.success) {
 				console.log('✅ Payment created, redirecting to Xendit...');
-				console.log('📋 Order status:', data.status); // Should be "PENDING"
+				console.log('📋 Order status:', data.status);
 
 				window.location.href = data.paymentUrl;
 			} else {
@@ -663,14 +663,14 @@
 
 			<div class="border-t bg-muted/50 p-6 dark:border-gray-800">
 				{#if !showCheckoutForm}
-					<div class="mb-4 space-y-2">
+					<div class="mb-4 space-y-2 px-2 sm:px-0">
 						<div class="flex items-center justify-between text-sm text-muted-foreground">
 							<span>Items ({totalItems})</span>
 							<span>₱{totalPrice.toLocaleString()}</span>
 						</div>
 						<div class="flex items-center justify-between">
-							<span class="text-lg font-semibold text-foreground">Total:</span>
-							<span class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+							<span class="text-base font-semibold text-foreground sm:text-lg">Total:</span>
+							<span class="text-xl font-bold text-blue-600 sm:text-2xl dark:text-blue-400"
 								>₱{totalPrice.toLocaleString()}</span
 							>
 						</div>
@@ -678,17 +678,17 @@
 					<Button
 						disabled={cart.length === 0}
 						onclick={proceedToCheckout}
-						class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-4 text-lg font-semibold shadow-lg transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
+						class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-3 text-base font-semibold shadow-lg transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 sm:py-4 sm:text-lg dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
 					>
 						Proceed to Checkout
 					</Button>
 				{:else}
-					<div class="space-y-4">
+					<div class="space-y-4 px-2 sm:px-0">
 						<div class="mb-4 flex items-center justify-between border-b pb-3 dark:border-gray-700">
-							<h3 class="text-lg font-semibold text-foreground">Checkout</h3>
+							<h3 class="text-base font-semibold text-foreground sm:text-lg">Checkout</h3>
 							<button
 								onclick={cancelCheckout}
-								class="text-sm text-muted-foreground hover:text-foreground"
+								class="touch-manipulation text-sm text-muted-foreground hover:text-foreground"
 							>
 								← Back
 							</button>
@@ -703,7 +703,7 @@
 									type="text"
 									bind:value={customerName}
 									placeholder="Juan Dela Cruz"
-									class="w-full"
+									class="w-full text-base"
 									name="customername"
 								/>
 							</div>
@@ -716,7 +716,7 @@
 									type="email"
 									bind:value={customerEmail}
 									placeholder="juan@example.com"
-									class="w-full"
+									class="w-full text-base"
 									name="customeremail"
 								/>
 							</div>
@@ -729,7 +729,7 @@
 									type="tel"
 									bind:value={customerPhone}
 									placeholder="+63 912 345 6789"
-									class="w-full"
+									class="w-full text-base"
 									name="customerphone"
 								/>
 							</div>
@@ -741,77 +741,101 @@
 								<Input
 									type="text"
 									bind:value={customerAddress}
-									placeholder="123 Main Street, City, Province"
-									class="w-full"
+									placeholder="123 Main Street, City"
+									class="w-full text-base"
 									name="customeraddress"
 								/>
 							</div>
 
 							<div>
-								<span class="mb-2 block text-sm font-medium text-foreground">Payment Method</span>
-								<div class="space-y-2">
+								<label class="mb-1 block text-sm font-medium text-foreground" for="paymentmethod"
+									>Payment Method</label
+								>
+
+								<!-- Mobile: Dropdown Select -->
+								<div class="sm:hidden">
+									<select
+										bind:value={paymentMethod}
+										name="paymentmethod"
+										class="w-full rounded-lg border-2 border-gray-200 bg-background p-3 text-base font-medium text-foreground transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-gray-700"
+									>
+										<option value="GCASH">GCash</option>
+										<option value="PAYMAYA">Maya</option>
+										<option value="GRABPAY">GrabPay</option>
+										<option value="SHOPEEPAY">ShopeePay</option>
+										<option value="CREDIT_CARD">Credit/Debit Card</option>
+									</select>
+								</div>
+
+								<!-- Desktop: Button Cards -->
+								<div class="hidden space-y-2 sm:block">
 									<button
+										type="button"
 										onclick={() => (paymentMethod = 'GCASH')}
-										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										class="flex w-full touch-manipulation items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'GCASH'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
 										<span class="font-medium text-foreground">GCash</span>
 										{#if paymentMethod === 'GCASH'}
-											<span class="text-blue-600 dark:text-blue-400">✓</span>
+											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
 									</button>
 
 									<button
+										type="button"
 										onclick={() => (paymentMethod = 'PAYMAYA')}
-										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										class="flex w-full touch-manipulation items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'PAYMAYA'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
 										<span class="font-medium text-foreground">Maya</span>
 										{#if paymentMethod === 'PAYMAYA'}
-											<span class="text-blue-600 dark:text-blue-400">✓</span>
+											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
 									</button>
 
 									<button
+										type="button"
 										onclick={() => (paymentMethod = 'GRABPAY')}
-										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										class="flex w-full touch-manipulation items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'GRABPAY'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
 										<span class="font-medium text-foreground">GrabPay</span>
 										{#if paymentMethod === 'GRABPAY'}
-											<span class="text-blue-600 dark:text-blue-400">✓</span>
+											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
 									</button>
 
 									<button
+										type="button"
 										onclick={() => (paymentMethod = 'SHOPEEPAY')}
-										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										class="flex w-full touch-manipulation items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'SHOPEEPAY'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
 										<span class="font-medium text-foreground">ShopeePay</span>
 										{#if paymentMethod === 'SHOPEEPAY'}
-											<span class="text-blue-600 dark:text-blue-400">✓</span>
+											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
 									</button>
 
 									<button
+										type="button"
 										onclick={() => (paymentMethod = 'CREDIT_CARD')}
-										class="flex w-full items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
+										class="flex w-full touch-manipulation items-center justify-between rounded-lg border-2 p-3 transition-all {paymentMethod ===
 										'CREDIT_CARD'
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
 										<span class="font-medium text-foreground">Credit/Debit Card</span>
 										{#if paymentMethod === 'CREDIT_CARD'}
-											<span class="text-blue-600 dark:text-blue-400">✓</span>
+											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
 									</button>
 								</div>
@@ -821,7 +845,7 @@
 						<div class="mt-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-950">
 							<div class="flex items-center justify-between text-sm">
 								<span class="font-medium text-foreground">Total:</span>
-								<span class="text-xl font-bold text-blue-600 dark:text-blue-400"
+								<span class="text-lg font-bold text-blue-600 sm:text-xl dark:text-blue-400"
 									>₱{totalPrice.toLocaleString()}</span
 								>
 							</div>
@@ -830,7 +854,7 @@
 						<Button
 							onclick={processPayment}
 							disabled={isProcessingPayment}
-							class="w-full cursor-pointer rounded-xl bg-gradient-to-r from-green-500 to-green-600 py-4 text-lg font-semibold shadow-lg transition-all hover:from-green-600 hover:to-green-700 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400"
+							class="w-full cursor-pointer touch-manipulation rounded-xl bg-gradient-to-r from-green-500 to-green-600 py-3 text-base font-semibold shadow-lg transition-all hover:from-green-600 hover:to-green-700 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:from-gray-300 disabled:to-gray-400 sm:py-4 sm:text-lg"
 						>
 							{#if isProcessingPayment}
 								Processing...

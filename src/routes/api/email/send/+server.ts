@@ -1,25 +1,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// ✅ USE ENVIRONMENT VARIABLES
-const GMAIL_USER = import.meta.env.VITE_GMAIL_USER || 'jayjayeviota101@gmail.com';
-const GMAIL_PASS = import.meta.env.VITE_GMAIL_PASS || 'dadq yjub xgew afgj';
+// Initialize Resend with your API key
+const resendApiKey = 're_HHKPzECm_2dwoLC8C2TnQmGt4aUspkryf';
+const resend = new Resend(resendApiKey);
 
-console.log('📧 Gmail email backend ready!', {
-	user: GMAIL_USER,
-	hasPassword: !!GMAIL_PASS
+console.log('📧 Resend email backend ready!', {
+	hasApiKey: !!resendApiKey,
+	apiKeyPrefix: resendApiKey ? resendApiKey.substring(0, 10) + '...' : 'none'
 });
 
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: GMAIL_USER,
-		pass: GMAIL_PASS
-	}
-});
-
-// ... REST OF YOUR EMAIL CODE REMAINS EXACTLY THE SAME ...
 interface OrderItem {
 	name: string;
 	price: number;
@@ -57,33 +48,47 @@ export const POST: RequestHandler = async ({ request }) => {
 		const htmlContent = generateOrderReceiptEmail(orderData, customerName);
 		const textContent = generateTextVersion(orderData, customerName);
 
-		const result = await transporter.sendMail({
-			from: `"Laveona" <${GMAIL_USER}>`,
+		console.log('🔐 Attempting to send with Resend...');
+
+		// Send email using Resend
+		const { data, error } = await resend.emails.send({
+			from: 'onboarding@resend.dev',
 			to: to,
 			subject: subject,
 			html: htmlContent,
 			text: textContent
 		});
 
-		console.log('✅ Email sent successfully to:', to);
-		console.log('📧 Message ID:', result.messageId);
+		console.log('📧 Resend API response received:', { data, error });
+
+		if (error) {
+			console.error('❌ Resend error:', error);
+			return json({
+				success: false,
+				error: typeof error === 'object' ? JSON.stringify(error) : String(error)
+			});
+		}
+
+		console.log('✅ Email sent successfully via Resend to:', to);
+		console.log('📧 Resend Email ID:', data?.id);
 
 		return json({
 			success: true,
 			message: 'Order receipt sent successfully',
 			to: to,
-			messageId: result.messageId
+			messageId: data?.id
 		});
 	} catch (error) {
-		console.error('❌ Email error:', error);
+		console.error('❌ Email endpoint error:', error);
 		return json({
 			success: false,
-			error: 'Failed to send email'
+			error: error instanceof Error ? error.message : 'Failed to send email'
 		});
 	}
 };
 
-// ... KEEP ALL YOUR EXISTING FUNCTIONS EXACTLY AS THEY ARE ...
+// ... KEEP ALL YOUR EXISTING generateOrderReceiptEmail, generateTextVersion,
+// and getPaymentMethodDisplay functions EXACTLY AS THEY WERE ...
 function getPaymentMethodDisplay(method: string): string {
 	if (!method) return 'N/A';
 

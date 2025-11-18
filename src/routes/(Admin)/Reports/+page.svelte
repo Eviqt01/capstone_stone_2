@@ -24,7 +24,6 @@
 	let loading = $state(true);
 	let error = $state('');
 
-	// Add these variables for user data
 	let userEmail = $state('');
 	let userRole = $state('');
 
@@ -33,7 +32,6 @@
 	let adminResponse = $state('');
 	let savingResponse = $state(false);
 
-	// Add state for delete confirmation
 	let showDeleteModal = $state(false);
 	let reportToDelete = $state<any>(null);
 	let deleting = $state(false);
@@ -322,7 +320,7 @@
 			<h1 class="text-xl font-bold">Customer Support</h1>
 			{#if MenuOpen}
 				<section
-					class="absolute top-13 -left-1 z-50 flex min-h-screen w-120 max-w-60 animate-in flex-col justify-center rounded-r-sm bg-gray-800 px-1 py-5 duration-300 slide-in-from-left"
+					class="absolute top-13 -left-1 z-50 flex min-h-100 w-120 max-w-60 animate-in flex-col justify-center rounded-r-sm bg-gray-800 px-1 py-5 duration-300 slide-in-from-left"
 				>
 					<div class="flex flex-col items-center gap-2 p-2">
 						<h1 class="text-xl font-bold text-white">Admin Panel</h1>
