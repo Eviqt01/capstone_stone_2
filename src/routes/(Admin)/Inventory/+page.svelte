@@ -81,13 +81,14 @@
 
 	const catergoryValue = [
 		{ value: 'All', label: 'All Categories' },
-		{ value: 'Clothing', label: 'Clothing' },
-		{ value: 'Shoes', label: 'Shoes' },
-		{ value: 'Electronics', label: 'Electronics' },
-		{ value: 'Books', label: 'Books' },
-		{ value: 'Sports', label: 'Sports' },
-		{ value: 'Bags', label: 'Bags' },
-		{ value: 'Home', label: 'Home' }
+		{ value: 'Guest Amenity Kit', label: 'Guest Amenity Kit' },
+		{ value: 'Dental Kit', label: 'Dental Kit' },
+		{ value: 'Soap', label: 'Soap' },
+		{ value: 'Shampoo', label: 'Shampoo' },
+		{ value: 'Toothbrush', label: 'Toothbrush' },
+		{ value: 'Toothpaste', label: 'Toothpaste' },
+		{ value: 'Hotel Slippers', label: 'Hotel Slippers' },
+		{ value: 'Bundles', label: 'Bundles' }
 	];
 
 	let value = $state('All');

@@ -183,7 +183,17 @@
 		}
 	}
 
-	const categories = ['All', 'Clothing', 'Shoes', 'Electronics', 'Books', 'Sports', 'Bags', 'Home'];
+	const categories = [
+		'All',
+		'Guest Amenity Kit',
+		'Dental Kit',
+		'Soap',
+		'Shampoo',
+		'Toothbrush',
+		'Toothpaste',
+		'Hotel Slippers',
+		'Bundles'
+	];
 
 	const showCart = () => {
 		isCartVisible = true;
@@ -355,9 +365,8 @@
 				<Menu_2 class="h-5 w-5 cursor-pointer text-gray-700" />
 			{/if}
 		</Button>
-		<h1 class="text-xl font-bold text-gray-800">Product Store</h1>
+		<h1 class="text-xl font-bold text-gray-800">Laveona Hotel Supplies</h1>
 
-		<!-- Add user email display in header -->
 		{#if userEmail}
 			<div class="ml-4 hidden items-center gap-2 rounded-full bg-blue-50 px-3 py-1 sm:flex">
 				<div class="h-2 w-2 rounded-full bg-green-500"></div>
