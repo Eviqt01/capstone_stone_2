@@ -56,7 +56,7 @@
 
 <section class="flex min-h-screen flex-col items-center justify-center gap-3 px-4 sm:gap-5 sm:px-0">
 	<form
-		class="flex w-full max-w-sm flex-col gap-3 rounded-lg border p-6 shadow-md sm:w-110 sm:max-w-110 sm:gap-5 sm:p-10"
+		class="flex w-full max-w-sm flex-col gap-3 rounded-lg border p-6 text-center shadow-md sm:w-110 sm:max-w-110 sm:gap-5 sm:p-10"
 		on:submit|preventDefault={handleSignup}
 	>
 		<div class="flex flex-col items-center">
