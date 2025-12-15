@@ -86,7 +86,6 @@
 		{ value: 'Soap', label: 'Soap' },
 		{ value: 'Shampoo', label: 'Shampoo' },
 		{ value: 'Toothbrush', label: 'Toothbrush' },
-		{ value: 'Toothpaste', label: 'Toothpaste' },
 		{ value: 'Hotel Slippers', label: 'Hotel Slippers' },
 		{ value: 'Bundles', label: 'Bundles' }
 	];

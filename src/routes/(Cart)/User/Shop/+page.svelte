@@ -13,12 +13,18 @@
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import { toggleMode } from 'mode-watcher';
+	import CheckCircle from '@tabler/icons-svelte/icons/check';
 
 	let { children } = $props();
 
 	let MenuOpen = $state(false);
 	let userEmail = $state('');
 	let userRole = $state('');
+
+	// Add notification state
+	let showNotification = $state(false);
+	let notificationMessage = $state('');
+	let notificationProductName = $state('');
 
 	const handleMenuClick = (event: Event) => {
 		event?.stopPropagation();
@@ -107,6 +113,18 @@
 		return filtered;
 	});
 
+	// Function to show notification
+	const showSuccessNotification = (productName: string, quantity: number = 1) => {
+		notificationProductName = productName;
+		notificationMessage = `${quantity} ${quantity > 1 ? 'items' : 'item'} added successfully`;
+		showNotification = true;
+
+		// Auto-hide after 3 seconds
+		setTimeout(() => {
+			showNotification = false;
+		}, 3000);
+	};
+
 	// Function to load user data
 	async function loadUserData() {
 		try {
@@ -190,7 +208,6 @@
 		'Soap',
 		'Shampoo',
 		'Toothbrush',
-		'Toothpaste',
 		'Hotel Slippers',
 		'Bundles'
 	];
@@ -227,8 +244,12 @@
 				...cart[existingItemIndex],
 				quantity: cart[existingItemIndex].quantity + 1
 			};
+			// Show notification for quantity increase
+			showSuccessNotification(product.name, cart[existingItemIndex].quantity);
 		} else {
 			cart = [...cart, { ...product, quantity: 1 }];
+			// Show notification for new item
+			showSuccessNotification(product.name, 1);
 		}
 	};
 
@@ -349,6 +370,10 @@
 			isProcessingPayment = false;
 		}
 	};
+
+	const closeNotification = () => {
+		showNotification = false;
+	};
 </script>
 
 <nav
@@ -365,7 +390,7 @@
 				<Menu_2 class="h-5 w-5 cursor-pointer text-gray-700" />
 			{/if}
 		</Button>
-		<h1 class="text-xl font-bold text-gray-800">Laveona Hotel Supplies</h1>
+		<h1 class="text-xl font-bold">Laveona Hotel Supplies</h1>
 
 		{#if userEmail}
 			<div class="ml-4 hidden items-center gap-2 rounded-full bg-blue-50 px-3 py-1 sm:flex">
@@ -462,6 +487,31 @@
 		</section>
 	{/if}
 </nav>
+
+<!-- Add Notification Toast/Snackbar -->
+{#if showNotification}
+	<div
+		class="fixed top-20 right-6 z-[100] flex animate-in items-center gap-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-4 shadow-lg backdrop-blur-sm slide-in-from-top-5 fade-in dark:border-green-900 dark:from-green-950/80 dark:to-emerald-950/80"
+		role="alert"
+	>
+		<div
+			class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900"
+		>
+			<CheckCircle class="h-6 w-6 text-green-600 dark:text-green-400" />
+		</div>
+		<div class="min-w-0 flex-1">
+			<p class="font-medium text-green-900 dark:text-green-100">{notificationProductName}</p>
+			<p class="text-sm text-green-700 dark:text-green-300">{notificationMessage}</p>
+		</div>
+		<button
+			onclick={closeNotification}
+			class="ml-2 rounded-full p-1 text-green-500 hover:bg-green-100 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900"
+			aria-label="Close notification"
+		>
+			<IconX class="h-5 w-5 cursor-pointer" />
+		</button>
+	</div>
+{/if}
 
 <section
 	class="relative flex min-h-screen flex-col gap-10 bg-gradient-to-br from-gray-50 to-blue-50/30 p-10 dark:from-gray-950 dark:to-blue-950/20"

@@ -11,7 +11,7 @@
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import { toggleMode } from 'mode-watcher';
-	import image01 from '$lib/images/image01.png';
+	import image01 from '$lib/images/laveona-logo.jpeg';
 
 	let { children } = $props();
 
@@ -47,7 +47,7 @@
 <nav
 	class="sticky top-0 z-10 flex items-center gap-2 bg-white p-2 shadow-sm transition-colors duration-200 dark:bg-gray-900"
 >
-	<h1 class="font-serif font-semibold text-gray-900 dark:text-white">Eviota 4i</h1>
+	<h1 class="font-serif font-semibold text-gray-900 dark:text-white">Laveona Hotel Supplies</h1>
 	<ModeWatcher />
 	<Button
 		onclick={toggleMode}
@@ -135,36 +135,21 @@
 						<span
 							class="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent dark:from-purple-400 dark:to-indigo-400"
 						>
-							Discover
+							Laveona Hotel Supplies
 						</span>
-						Your Style.
 					</h1>
-					<h2
-						class="mt-2 font-serif text-xl leading-tight font-bold break-words text-slate-700 transition-colors duration-300 sm:text-2xl md:text-3xl lg:text-5xl xl:text-6xl dark:text-gray-200"
-					>
-						Shop the Latest<br class="hidden sm:block" />
-						<span
-							class="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent dark:from-purple-400 dark:to-indigo-400"
-						>
-							Trends Effortlessly
-						</span>
-					</h2>
 				</div>
 
 				<div
 					class="rounded-xl border border-white/20 bg-white/60 p-4 backdrop-blur-sm transition-all duration-300 sm:rounded-2xl sm:p-6 dark:border-gray-700/50 dark:bg-gray-800/60"
 				>
 					<h3
-						class="mb-2 font-serif text-lg font-medium text-slate-800 transition-colors duration-300 sm:mb-3 sm:text-xl md:text-2xl dark:text-gray-100"
+						class="font-serif text-lg font-medium text-slate-800 transition-colors duration-300 sm:text-xl md:text-2xl dark:text-gray-100"
 					>
-						Find the Perfect Look for Every Occasion.
+						Distributor of Hotel Supplies - Guest Amenity Kit, Dental Kit, Soap, Shampoo,
+						Toothbrush, Toothpaste, Hotel Slippers. Best for Hotel, Resorts, Staycation, Condotel,
+						AirBNB and even for donation.
 					</h3>
-
-					<p
-						class="text-sm font-medium text-slate-800 transition-colors duration-300 sm:text-base md:text-lg dark:text-gray-200"
-					>
-						Upgrade Your Wardrobe with Just One Click!
-					</p>
 				</div>
 
 				<div class="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">

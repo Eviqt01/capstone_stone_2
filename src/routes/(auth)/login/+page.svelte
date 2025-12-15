@@ -18,7 +18,6 @@
 	let redirectTo = $state('');
 
 	onMount(() => {
-		// Get redirect URL from query parameters
 		const urlParams = new URLSearchParams(window.location.search);
 		redirectTo = urlParams.get('redirectTo') || '';
 		console.log('🔀 Redirect target:', redirectTo);
@@ -46,10 +45,8 @@
 				return;
 			}
 
-			// Clear any existing session storage first
 			sessionStorage.clear();
 
-			// Store NEW user data in session storage
 			sessionStorage.setItem('userEmail', data.user.email);
 			sessionStorage.setItem('userRole', data.user.role);
 			sessionStorage.setItem('userId', data.user.id);
@@ -57,7 +54,6 @@
 			console.log('✅ Login successful - User:', data.user.email);
 			console.log('🎯 Redirecting to:', redirectTo || 'default route');
 
-			// Redirect based on role and redirect parameter
 			if (data.user.role === 'admin') {
 				goto(redirectTo || '/Dashboard');
 			} else {

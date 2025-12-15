@@ -80,16 +80,6 @@
 			</div>
 		{/if}
 
-		{#if resetLink}
-			<!-- FOR TESTING ONLY - REMOVE IN PRODUCTION -->
-			<div class="rounded-md bg-blue-50 p-3">
-				<p class="mb-2 text-sm font-semibold text-blue-800">Testing Link:</p>
-				<a href={resetLink} class="text-xs break-all text-blue-600 underline hover:text-blue-800">
-					{resetLink}
-				</a>
-			</div>
-		{/if}
-
 		<div class="flex flex-col gap-1">
 			<Label class="text-sm font-normal sm:text-base">Email Address</Label>
 			<Input

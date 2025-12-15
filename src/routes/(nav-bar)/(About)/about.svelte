@@ -5,6 +5,10 @@
 	import Plant_2 from '@tabler/icons-svelte/icons/plant-2';
 	import Sparkles from '@tabler/icons-svelte/icons/sparkles';
 	import HeartHandshake from '@tabler/icons-svelte/icons/heart-handshake';
+	import Image01 from '$lib/images/Rommel.jpeg';
+	import Image02 from '$lib/images/genon.png';
+	import Image03 from '$lib/images/ulfina.jpg';
+	import Image04 from '$lib/images/lazaro.jpg';
 </script>
 
 <section id="about" class="flex min-h-auto flex-col gap-10">
@@ -102,50 +106,38 @@
 		<h1 class=" text-center text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
 			Meet Our Group
 		</h1>
-
-		<p
-			class="max-w-3xl px-4 text-center text-sm leading-relaxed font-medium text-gray-600 sm:text-base md:text-lg lg:text-xl dark:text-gray-300"
-		>
-			ahhh kapagod gusto ko na matulog pero di pwede
-		</p>
 	</div>
 	<section class="mb-8 flex flex-wrap items-center justify-center gap-10">
 		<div
 			class="flex h-full w-80 flex-col items-center justify-center gap-4 rounded-4xl border p-5 duration-300 hover:-translate-y-1 hover:shadow-2xl"
 		>
-			<span class="text-2xl sm:text-3xl md:text-4xl">🤝</span>
+			<img src={Image03} class="size-40 rounded-full border border-black" alt="rommelHelera" />
 			<h3
 				class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl md:text-2xl"
 			>
-				Fair Trade
+				Simon Ulfina <br /><span class="text-[16px] text-black">(Documents)</span>
 			</h3>
-			<p
-				class="text-center text-sm leading-relaxed text-gray-700 sm:text-base md:text-lg dark:text-gray-300"
-			>
-				We ensure fair wages and safe working conditions for everyone in our supply chain.
-			</p>
 		</div>
 
 		<div
 			class="flex h-full w-80 flex-col items-center justify-center gap-4 rounded-4xl border p-5 duration-300 hover:-translate-y-1 hover:shadow-2xl"
 		>
-			<span class="text-2xl sm:text-3xl md:text-4xl">🤝</span>
+			<img src={Image01} class="size-40 rounded-full border border-black" alt="rommelHelera" />
 			<h3
 				class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl md:text-2xl"
 			>
-				Fair Trade
+				Rommel Helera <br /><span class="text-[16px] text-black">(Documents)</span>
 			</h3>
-			<p
-				class="text-center text-sm leading-relaxed text-gray-700 sm:text-base md:text-lg dark:text-gray-300"
-			>
-				We ensure fair wages and safe working conditions for everyone in our supply chain.
-			</p>
 		</div>
 
 		<div
 			class="flex h-full w-80 flex-col items-center justify-center gap-4 rounded-4xl border p-5 duration-300 hover:-translate-y-1 hover:shadow-2xl"
 		>
-			<span class="text-2xl sm:text-3xl md:text-4xl">🤝</span>
+			<img
+				src="https://scontent.fmnl17-5.fna.fbcdn.net/v/t39.30808-6/513935129_10081353755282353_645100266146517731_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeFF4tp-DEWozN22_Zia7wCTPaJ1cXGHx4k9onVxcYfHiUl9c6aix0Yf3He6Ml2T82h7nFjkOhy2IfAKg-JSB9qX&_nc_ohc=R5X22xCL9YIQ7kNvwFSFstu&_nc_oc=AdnZNBI5WVF_L_kc0Fl4gGAEyt_NInRc3BiuOQGT215RnUHa4l_bKcDU-ZTF0iYlDNA&_nc_zt=23&_nc_ht=scontent.fmnl17-5.fna&_nc_gid=yH-aQ8hEMCzCz52qvb-wvQ&oh=00_Afnm1HIdJMcXauuJpVlIkUYKCJM4mJ3t0NNSdgq6B1-8cg&oe=69458454"
+				class="size-40 rounded-full border border-black"
+				alt="jayjayeviota"
+			/>
 			<h3
 				class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl md:text-2xl"
 			>
@@ -174,32 +166,22 @@
 		<div
 			class="flex h-full w-80 flex-col items-center justify-center gap-4 rounded-4xl border p-5 duration-300 hover:-translate-y-1 hover:shadow-2xl"
 		>
-			<span class="text-2xl sm:text-3xl md:text-4xl">🤝</span>
+			<img src={Image02} class="size-40 rounded-full border border-black" alt="owenGenon" />
 			<h3
 				class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl md:text-2xl"
 			>
-				Fair Trade
+				Owen Genon <br /><span class="text-[16px] text-black">(Documents)</span>
 			</h3>
-			<p
-				class="text-center text-sm leading-relaxed text-gray-700 sm:text-base md:text-lg dark:text-gray-300"
-			>
-				We ensure fair wages and safe working conditions for everyone in our supply chain.
-			</p>
 		</div>
 		<div
 			class="flex h-full w-80 flex-col items-center justify-center gap-4 rounded-4xl border p-5 duration-300 hover:-translate-y-1 hover:shadow-2xl"
 		>
-			<span class="text-2xl sm:text-3xl md:text-4xl">🤝</span>
+			<img src={Image04} class="size-40 rounded-full border border-black" alt="rommelHelera" />
 			<h3
 				class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl md:text-2xl"
 			>
-				Fair Trade
+				Sherlita Lazaro <br /><span class="text-[16px] text-black">(Documents)</span>
 			</h3>
-			<p
-				class="text-center text-sm leading-relaxed text-gray-700 sm:text-base md:text-lg dark:text-gray-300"
-			>
-				We ensure fair wages and safe working conditions for everyone in our supply chain.
-			</p>
 		</div>
 	</section>
 </section>
