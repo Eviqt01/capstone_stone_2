@@ -14,6 +14,12 @@
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import { toggleMode } from 'mode-watcher';
 	import CheckCircle from '@tabler/icons-svelte/icons/check';
+	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import GcashLogo from '$lib/images/Gcash_logo.png';
+	import MayaLogo from '$lib/images/MayaLogo.png';
+	import GrabPay from '$lib/images/GrabPay.png';
+	import ShopeePay from '$lib/images/ShopeePay.png';
+	import CardPayment from '$lib/images/CreditDebitCart.png';
 
 	let { children } = $props();
 
@@ -91,6 +97,7 @@
 	let customerEmail = $state('');
 	let customerPhone = $state('');
 	let customerAddress = $state('');
+	let customerComments = $state(''); // SEPARATE VARIABLE FOR COMMENTS
 	let paymentMethod = $state('GCASH');
 
 	const totalItems = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
@@ -306,6 +313,7 @@
 		customerEmail = '';
 		customerPhone = '';
 		customerAddress = '';
+		customerComments = ''; // ALSO CLEAR COMMENTS
 	};
 
 	const processPayment = async () => {
@@ -329,7 +337,8 @@
 					name: customerName,
 					email: customerEmail,
 					phone: customerPhone,
-					address: customerAddress
+					address: customerAddress,
+					comments: customerComments || '' // Ensure comments are sent even if empty
 				},
 				items: cart.map((item) => ({
 					id: item.id,
@@ -343,7 +352,8 @@
 				failureUrl: `${window.location.origin}/payment-failed?payment_status=failed`
 			};
 
-			console.log('🔄 Sending payment request...');
+			console.log('🔄 Sending payment request with comments:', customerComments); // Debug log
+			console.log('📦 Order data:', JSON.stringify(orderData, null, 2)); // Debug log
 
 			const response = await fetch('/api/create-payment', {
 				method: 'POST',
@@ -630,10 +640,11 @@
 		></button>
 
 		<div
-			class="fixed top-0 right-0 z-50 flex h-screen w-full max-w-md animate-in flex-col bg-background shadow-2xl duration-300 slide-in-from-right dark:border-l dark:border-gray-800"
+			class="fixed top-0 z-50 flex h-screen w-full max-w-md flex-col self-center bg-background shadow-2xl duration-300 slide-in-from-right dark:border-l dark:border-gray-800"
 		>
+			<!-- Cart Header -->
 			<div
-				class="flex items-center justify-between border-b bg-gradient-to-r from-blue-500 to-blue-600 p-6 dark:from-blue-600 dark:to-blue-700"
+				class="flex shrink-0 items-center justify-between border-b bg-gradient-to-r from-blue-500 to-blue-600 p-6 dark:from-blue-600 dark:to-blue-700"
 			>
 				<div class="flex items-center gap-3">
 					<ShoppingCart class="size-6 text-white" />
@@ -647,82 +658,90 @@
 				</button>
 			</div>
 
-			<div class="flex-1 overflow-y-auto p-6">
-				{#if cart.length === 0}
-					<div class="flex h-full flex-col items-center justify-center text-muted-foreground">
-						<ShoppingCart class="mb-4 size-20 opacity-30" />
-						<p class="text-lg font-medium">Your cart is empty</p>
-						<p class="text-sm">Start adding some products!</p>
-					</div>
-				{:else}
-					<div class="mb-4 flex items-center justify-between">
-						<p class="text-sm text-muted-foreground">
-							{cart.length}
-							{cart.length === 1 ? 'item' : 'items'} in cart
-						</p>
-						<button
-							onclick={clearCart}
-							class="text-sm font-medium text-red-600 hover:text-red-700 active:scale-95 dark:text-red-500 dark:hover:text-red-400"
+			<!-- Scrollable Cart Items -->
+			<div class="flex-1 overflow-y-auto">
+				<div class="p-6">
+					{#if cart.length === 0}
+						<div
+							class="flex h-full flex-col items-center justify-center py-20 text-muted-foreground"
 						>
-							Clear All
-						</button>
-					</div>
-					<div class="space-y-4">
-						{#each cart as item (item.id)}
-							<div
-								class="group relative overflow-hidden rounded-xl border-2 bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:hover:border-blue-700"
+							<ShoppingCart class="mb-4 size-20 opacity-30" />
+							<p class="text-lg font-medium">Your cart is empty</p>
+							<p class="text-sm">Start adding some products!</p>
+						</div>
+					{:else}
+						<div class="mb-4 flex items-center justify-between">
+							<p class="text-sm text-muted-foreground">
+								{cart.length}
+								{cart.length === 1 ? 'item' : 'items'} in cart
+							</p>
+							<button
+								onclick={clearCart}
+								class="text-sm font-medium text-red-600 hover:text-red-700 active:scale-95 dark:text-red-500 dark:hover:text-red-400"
 							>
-								<div class="flex gap-4">
-									<div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-										<img src={item.image} class="h-full w-full object-cover" alt={item.name} />
-									</div>
-									<div class="flex min-w-0 flex-1 flex-col justify-between">
-										<div>
-											<h3 class="line-clamp-1 font-semibold text-card-foreground">{item.name}</h3>
-											<p class="text-xs text-muted-foreground">{item.category}</p>
-											<p class="text-sm text-muted-foreground">
-												₱{item.price.toLocaleString()} each
-											</p>
+								Clear All
+							</button>
+						</div>
+						<div class="space-y-4">
+							{#each cart as item (item.id)}
+								<div
+									class="group relative overflow-hidden rounded-xl border-2 bg-card p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:hover:border-blue-700"
+								>
+									<div class="flex gap-4">
+										<div
+											class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+										>
+											<img src={item.image} class="h-full w-full object-cover" alt={item.name} />
 										</div>
-										<div class="flex items-center justify-between">
-											<div class="flex items-center gap-2">
+										<div class="flex min-w-0 flex-1 flex-col justify-between">
+											<div>
+												<h3 class="line-clamp-1 font-semibold text-card-foreground">{item.name}</h3>
+												<p class="text-xs text-muted-foreground">{item.category}</p>
+												<p class="text-sm text-muted-foreground">
+													₱{item.price.toLocaleString()} each
+												</p>
+											</div>
+											<div class="flex items-center justify-between">
+												<div class="flex items-center gap-2">
+													<button
+														onclick={() => decreaseQuantity(item.id)}
+														class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-bold text-foreground transition-all hover:bg-blue-500 hover:text-white active:scale-90"
+													>
+														-
+													</button>
+													<span class="w-8 text-center font-bold">{item.quantity}</span>
+													<button
+														onclick={() => increaseQuantity(item.id)}
+														class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-bold text-foreground transition-all hover:bg-blue-500 hover:text-white active:scale-90"
+													>
+														+
+													</button>
+												</div>
 												<button
-													onclick={() => decreaseQuantity(item.id)}
-													class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-bold text-foreground transition-all hover:bg-blue-500 hover:text-white active:scale-90"
+													onclick={() => removeFromCart(item.id)}
+													class="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-all hover:bg-red-500 hover:text-white active:scale-95 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-600"
 												>
-													-
-												</button>
-												<span class="w-8 text-center font-bold">{item.quantity}</span>
-												<button
-													onclick={() => increaseQuantity(item.id)}
-													class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted font-bold text-foreground transition-all hover:bg-blue-500 hover:text-white active:scale-90"
-												>
-													+
+													Remove
 												</button>
 											</div>
-											<button
-												onclick={() => removeFromCart(item.id)}
-												class="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-all hover:bg-red-500 hover:text-white active:scale-95 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-600"
-											>
-												Remove
-											</button>
 										</div>
 									</div>
+									<div class="mt-2 flex justify-end">
+										<span class="font-bold text-blue-600 dark:text-blue-400"
+											>₱{(item.price * item.quantity).toLocaleString()}</span
+										>
+									</div>
 								</div>
-								<div class="mt-2 flex justify-end">
-									<span class="font-bold text-blue-600 dark:text-blue-400"
-										>₱{(item.price * item.quantity).toLocaleString()}</span
-									>
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</div>
 
-			<div class="border-t bg-muted/50 p-6 dark:border-gray-800">
+			<!-- Fixed Checkout/Payment Footer -->
+			<div class="shrink-0 border-t bg-background p-6 dark:border-gray-800">
 				{#if !showCheckoutForm}
-					<div class="mb-4 space-y-2 px-2 sm:px-0">
+					<div class="mb-4 space-y-2">
 						<div class="flex items-center justify-between text-sm text-muted-foreground">
 							<span>Items ({totalItems})</span>
 							<span>₱{totalPrice.toLocaleString()}</span>
@@ -742,7 +761,7 @@
 						Proceed to Checkout
 					</Button>
 				{:else}
-					<div class="space-y-4 px-2 sm:px-0">
+					<div class="space-y-4">
 						<div class="mb-4 flex items-center justify-between border-b pb-3 dark:border-gray-700">
 							<h3 class="text-base font-semibold text-foreground sm:text-lg">Checkout</h3>
 							<button
@@ -753,7 +772,7 @@
 							</button>
 						</div>
 
-						<div class="space-y-3">
+						<div class="max-h-[calc(100vh-400px)] space-y-3 overflow-y-auto pr-2">
 							<div>
 								<label class="mb-1 block text-sm font-medium text-foreground" for="customername"
 									>Full Name</label
@@ -807,11 +826,21 @@
 							</div>
 
 							<div>
+								<label class="mb-1 block text-sm font-medium text-foreground" for="comments"
+									>Comments or Suggestions (*Optional*)</label
+								>
+								<Textarea
+									bind:value={customerComments}
+									placeholder="Add a comment or Suggestions Here"
+									class="w-full resize-none text-base"
+									name="comments"
+								/>
+							</div>
+
+							<div>
 								<label class="mb-1 block text-sm font-medium text-foreground" for="paymentmethod"
 									>Payment Method</label
 								>
-
-								<!-- Mobile: Dropdown Select -->
 								<div class="sm:hidden">
 									<select
 										bind:value={paymentMethod}
@@ -826,7 +855,6 @@
 									</select>
 								</div>
 
-								<!-- Desktop: Button Cards -->
 								<div class="hidden space-y-2 sm:block">
 									<button
 										type="button"
@@ -836,7 +864,9 @@
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">GCash</span>
+										<span class="flex items-center gap-2 font-medium text-foreground"
+											><img src={GcashLogo} class="size-8 rounded-full" alt="Gcash" />GCash</span
+										>
 										{#if paymentMethod === 'GCASH'}
 											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
@@ -850,7 +880,9 @@
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">Maya</span>
+										<span class="flex items-center gap-2 font-medium text-foreground">
+											<img src={MayaLogo} class="size-8 rounded-md" alt="Maya" />Maya</span
+										>
 										{#if paymentMethod === 'PAYMAYA'}
 											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
@@ -864,7 +896,9 @@
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">GrabPay</span>
+										<span class="flex items-center gap-2 font-medium text-foreground">
+											<img src={GrabPay} class="size-8 rounded-md" alt="GrabPay" />GrabPay</span
+										>
 										{#if paymentMethod === 'GRABPAY'}
 											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
@@ -878,7 +912,13 @@
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">ShopeePay</span>
+										<span class="flex items-center gap-2 font-medium text-foreground">
+											<img
+												src={ShopeePay}
+												class="size-8 rounded-md"
+												alt="ShopeePay"
+											/>ShopeePay</span
+										>
 										{#if paymentMethod === 'SHOPEEPAY'}
 											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}
@@ -892,7 +932,10 @@
 											? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
 											: 'border-gray-200 bg-background dark:border-gray-700'}"
 									>
-										<span class="font-medium text-foreground">Credit/Debit Card</span>
+										<span class="flex items-center gap-2 font-medium text-foreground">
+											<img src={CardPayment} class="size-8 rounded-md" alt="CardPay" />Credit/Debit
+											Card</span
+										>
 										{#if paymentMethod === 'CREDIT_CARD'}
 											<span class="text-lg text-blue-600 dark:text-blue-400">✓</span>
 										{/if}

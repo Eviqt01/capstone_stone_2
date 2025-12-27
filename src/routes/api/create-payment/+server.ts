@@ -21,6 +21,7 @@ interface Customer {
 	email: string;
 	phone: string;
 	address: string;
+	comments: string; // <-- ADDED THIS
 }
 
 interface OrderData {
@@ -57,6 +58,7 @@ interface XenditInvoicePayload {
 		selected_payment_method: string;
 		payment_method_display: string;
 		customer_address: string;
+		customer_comments?: string; // <-- ADDED THIS (optional for Xendit)
 	};
 	payment_method?: string;
 }
@@ -67,6 +69,7 @@ interface DatabaseOrder {
 	customer_email: string;
 	customer_phone: string;
 	customer_address: string;
+	comments: string; // <-- ADDED THIS
 	total: number;
 	status: string;
 	payment_method: string;
@@ -140,14 +143,17 @@ async function createOrderInDatabase(
 	const orderId = `order_${Date.now()}`;
 	const now = new Date().toISOString();
 
+	console.log('💾 Saving order to database with comments:', orderData.customer.comments); // Debug log
+
 	const orderRecord = {
 		id: orderId,
 		customer_name: orderData.customer.name,
 		customer_email: orderData.customer.email,
 		customer_phone: orderData.customer.phone,
 		customer_address: orderData.customer.address,
+		comments: orderData.customer.comments || '', // <-- CRITICAL: ADDED THIS
 		total: orderData.amount,
-		status: 'PENDING', // Start as PENDING, not Completed
+		status: 'PENDING',
 		payment_method: orderData.paymentMethod,
 		invoice_id: invoiceId,
 		items: orderData.items,
@@ -287,6 +293,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const orderData: OrderData = await request.json();
 
 		console.log('💰 Payment method received:', orderData.paymentMethod);
+		console.log('📝 Customer comments received:', orderData.customer.comments); // <-- ADDED DEBUG LOG
 
 		// Get payment method name early
 		const paymentMethodName = getPaymentMethodName(orderData.paymentMethod);
@@ -323,7 +330,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			metadata: {
 				selected_payment_method: orderData.paymentMethod,
 				payment_method_display: paymentMethodName,
-				customer_address: orderData.customer.address
+				customer_address: orderData.customer.address,
+				customer_comments: orderData.customer.comments || '' // <-- ADDED THIS (optional)
 			}
 		};
 
@@ -361,6 +369,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const order = await createOrderInDatabase(orderData, invoiceId);
 
 		console.log('🔄 Order created as PENDING:', order.id);
+		console.log('✅ Comments saved to database:', order.comments); // <-- ADDED DEBUG LOG
 		console.log('⏳ Waiting for payment confirmation via webhook...');
 
 		// Record activities
