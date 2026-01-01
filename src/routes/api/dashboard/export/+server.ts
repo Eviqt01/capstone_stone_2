@@ -247,10 +247,19 @@ async function exportOrders(workbook: ExcelJS.Workbook, filters: Filters) {
 		worksheet.addRow({}); // Empty row
 		const totalAmount = orders.reduce((sum: number, order: Order) => sum + (order.total || 0), 0);
 
-		const summaryRow = worksheet.addRow({
-			customer_name: 'TOTAL:',
-			total: totalAmount
-		});
+		const summaryRow = worksheet.addRow([
+			'', // id
+			'TOTAL:', // customer_name
+			'', // customer_email
+			'', // customer_phone
+			'', // customer_address
+			'', // comments
+			totalAmount, // total
+			'', // status
+			'', // payment_method
+			'', // created_at
+			'' // deleted_at
+		]);
 
 		summaryRow.font = { bold: true };
 		summaryRow.eachCell((cell) => {
@@ -348,15 +357,21 @@ async function addOrderItemsSheet(workbook: ExcelJS.Workbook, orders: Order[]) {
 
 		worksheet.addRow({}); // Empty row
 
-		const totalItemsRow = worksheet.addRow({
-			product_name: 'TOTAL ITEMS:',
-			quantity: totalItems
-		});
+		const totalItemsRow = worksheet.addRow([
+			'', // order_id
+			'TOTAL ITEMS:', // product_name
+			totalItems, // quantity
+			'', // price
+			'' // total_price
+		]);
 
-		const totalRevenueRow = worksheet.addRow({
-			product_name: 'TOTAL REVENUE:',
-			total_price: totalRevenue
-		});
+		const totalRevenueRow = worksheet.addRow([
+			'', // order_id
+			'TOTAL REVENUE:', // product_name
+			'', // quantity
+			'', // price
+			totalRevenue // total_price
+		]);
 
 		[totalItemsRow, totalRevenueRow].forEach((row) => {
 			row.font = { bold: true };
@@ -495,7 +510,7 @@ async function exportProducts(workbook: ExcelJS.Workbook) {
 		{ header: 'Stock', key: 'stock', width: 15 },
 		{ header: 'Description', key: 'description', width: 40 },
 		{ header: 'Image URL', key: 'image', width: 40 },
-		{ header: 'Created Date', key: 'created_at', width: 20 }
+		{ header: 'Created Date', key: 'created_at', width: 25 }
 	];
 
 	const { data: products, error } = await supabase
@@ -526,7 +541,13 @@ async function exportProducts(workbook: ExcelJS.Workbook) {
 				stock: product.stock,
 				description: product.description || '',
 				image: product.image,
-				created_at: new Date(product.created_at).toLocaleDateString('en-US')
+				created_at: new Date(product.created_at).toLocaleDateString('en-US', {
+					year: 'numeric',
+					month: 'short',
+					day: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				})
 			});
 
 			// Alternate row coloring
@@ -564,20 +585,38 @@ async function exportProducts(workbook: ExcelJS.Workbook) {
 
 		worksheet.addRow({}); // Empty row
 
-		const summary1 = worksheet.addRow({
-			name: 'TOTAL PRODUCTS:',
-			stock: totalProducts
-		});
+		const summary1 = worksheet.addRow([
+			'', // id
+			'TOTAL PRODUCTS:', // name
+			'', // category
+			'', // price
+			totalProducts, // stock
+			'', // description
+			'', // image
+			'' // created_at
+		]);
 
-		const summary2 = worksheet.addRow({
-			name: 'TOTAL STOCK:',
-			stock: totalStock
-		});
+		const summary2 = worksheet.addRow([
+			'', // id
+			'TOTAL STOCK:', // name
+			'', // category
+			'', // price
+			totalStock, // stock
+			'', // description
+			'', // image
+			'' // created_at
+		]);
 
-		const summary3 = worksheet.addRow({
-			name: 'TOTAL INVENTORY VALUE:',
-			price: totalValue
-		});
+		const summary3 = worksheet.addRow([
+			'', // id
+			'TOTAL INVENTORY VALUE:', // name
+			'', // category
+			totalValue, // price
+			'', // stock
+			'', // description
+			'', // image
+			'' // created_at
+		]);
 
 		[summary1, summary2, summary3].forEach((row) => {
 			row.font = { bold: true };
@@ -701,25 +740,45 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 
 		worksheet.addRow({}); // Empty row
 
-		const summary1 = worksheet.addRow({
-			name: 'TOTAL CUSTOMERS:',
-			order_count: totalCustomers
-		});
+		const summary1 = worksheet.addRow([
+			'TOTAL CUSTOMERS:', // name
+			'', // email
+			'', // phone
+			'', // address
+			totalCustomers, // order_count
+			'', // total_spent
+			'' // avg_order_value
+		]);
 
-		const summary2 = worksheet.addRow({
-			name: 'TOTAL ORDERS:',
-			order_count: totalOrders
-		});
+		const summary2 = worksheet.addRow([
+			'TOTAL ORDERS:', // name
+			'', // email
+			'', // phone
+			'', // address
+			totalOrders, // order_count
+			'', // total_spent
+			'' // avg_order_value
+		]);
 
-		const summary3 = worksheet.addRow({
-			name: 'TOTAL REVENUE:',
-			total_spent: totalRevenue
-		});
+		const summary3 = worksheet.addRow([
+			'TOTAL REVENUE:', // name
+			'', // email
+			'', // phone
+			'', // address
+			'', // order_count
+			totalRevenue, // total_spent
+			'' // avg_order_value
+		]);
 
-		const summary4 = worksheet.addRow({
-			name: 'AVERAGE ORDER VALUE:',
-			avg_order_value: avgOrderValue.toFixed(2)
-		});
+		const summary4 = worksheet.addRow([
+			'AVERAGE ORDER VALUE:', // name
+			'', // email
+			'', // phone
+			'', // address
+			'', // order_count
+			'', // total_spent
+			avgOrderValue.toFixed(2) // avg_order_value
+		]);
 
 		[summary1, summary2, summary3, summary4].forEach((row) => {
 			row.font = { bold: true };
