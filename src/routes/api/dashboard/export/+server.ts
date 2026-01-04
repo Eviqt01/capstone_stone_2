@@ -610,6 +610,7 @@ async function exportProducts(workbook: ExcelJS.Workbook) {
 		const summary3 = worksheet.addRow([
 			'', // id
 			'TOTAL INVENTORY VALUE:', // name
+			'',
 			'', // category
 			totalValue, // price
 			'', // stock
@@ -763,9 +764,8 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 		const summary3 = worksheet.addRow([
 			'TOTAL REVENUE:', // name
 			'', // email
+			'',
 			'', // phone
-			'', // address
-			'', // order_count
 			totalRevenue, // total_spent
 			'' // avg_order_value
 		]);
@@ -775,9 +775,8 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 			'', // email
 			'', // phone
 			'', // address
-			'', // order_count
-			'', // total_spent
-			avgOrderValue.toFixed(2) // avg_order_value
+			avgOrderValue,
+			''
 		]);
 
 		[summary1, summary2, summary3, summary4].forEach((row) => {
