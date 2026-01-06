@@ -62,7 +62,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const dataType: string = body.dataType;
 		const filters: Filters = body.filters || {};
 
-		console.log(`📊 Exporting ${dataType} data...`);
+		console.log(`📊 Exporting ${dataType} data with filters:`, filters);
 
 		const workbook = new ExcelJS.Workbook();
 		workbook.creator = 'Laveona Hotel Supplies';
@@ -121,37 +121,71 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 };
 
-// Helper function to get start date from filter
-function getStartDateFromFilter(filter: string): Date | null {
+// Helper function to get start and end date from filter
+function getDateRangeFromFilter(filter: string): { startDate: Date | null; endDate: Date | null } {
 	const now = new Date();
+	let startDate: Date | null = null;
+	let endDate: Date | null = null;
 
 	switch (filter) {
 		case 'today':
-			now.setHours(0, 0, 0, 0);
-			return now;
+			startDate = new Date();
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case 'yesterday':
-			const yesterday = new Date();
-			yesterday.setDate(yesterday.getDate() - 1);
-			yesterday.setHours(0, 0, 0, 0);
-			return yesterday;
+			startDate = new Date();
+			startDate.setDate(startDate.getDate() - 1);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setDate(endDate.getDate() - 1);
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case '7':
-			now.setDate(now.getDate() - 7);
-			return now;
+			startDate = new Date();
+			startDate.setDate(startDate.getDate() - 7);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case '30':
-			now.setDate(now.getDate() - 30);
-			return now;
+			startDate = new Date();
+			startDate.setDate(startDate.getDate() - 30);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case '90':
-			now.setDate(now.getDate() - 90);
-			return now;
+			startDate = new Date();
+			startDate.setDate(startDate.getDate() - 90);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case 'this_month':
-			return new Date(now.getFullYear(), now.getMonth(), 1);
+			startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		case 'last_month':
-			return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+			startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+			break;
 		case 'this_year':
-			return new Date(now.getFullYear(), 0, 1);
+			startDate = new Date(now.getFullYear(), 0, 1);
+			startDate.setHours(0, 0, 0, 0);
+			endDate = new Date();
+			endDate.setHours(23, 59, 59, 999);
+			break;
 		default:
-			return null;
+			// 'all' - no filter
+			break;
 	}
+
+	return { startDate, endDate };
 }
 
 // Export Orders Function
@@ -183,10 +217,18 @@ async function exportOrders(workbook: ExcelJS.Workbook, filters: Filters) {
 
 	// Apply time filter if provided
 	if (filters.timeFilter && filters.timeFilter !== 'all') {
-		const startDate = getStartDateFromFilter(filters.timeFilter);
+		const { startDate, endDate } = getDateRangeFromFilter(filters.timeFilter);
+
 		if (startDate) {
 			query = query.gte('created_at', startDate.toISOString());
 		}
+		if (endDate) {
+			query = query.lte('created_at', endDate.toISOString());
+		}
+
+		console.log(
+			`📅 Filtering orders from ${startDate?.toISOString()} to ${endDate?.toISOString()}`
+		);
 	}
 
 	// Apply status filter if provided
@@ -197,6 +239,8 @@ async function exportOrders(workbook: ExcelJS.Workbook, filters: Filters) {
 	const { data: orders, error } = await query;
 
 	if (error) throw error;
+
+	console.log(`✅ Found ${orders?.length || 0} orders matching filters`);
 
 	// Add header row styling
 	const headerRow = worksheet.getRow(1);
@@ -407,14 +451,22 @@ async function exportSales(workbook: ExcelJS.Workbook, filters: Filters) {
 
 	// Apply time filter
 	if (filters.timeFilter && filters.timeFilter !== 'all') {
-		const startDate = getStartDateFromFilter(filters.timeFilter);
+		const { startDate, endDate } = getDateRangeFromFilter(filters.timeFilter);
+
 		if (startDate) {
 			query = query.gte('created_at', startDate.toISOString());
 		}
+		if (endDate) {
+			query = query.lte('created_at', endDate.toISOString());
+		}
+
+		console.log(`📅 Filtering sales from ${startDate?.toISOString()} to ${endDate?.toISOString()}`);
 	}
 
 	const { data: orders, error } = await query;
 	if (error) throw error;
+
+	console.log(`✅ Found ${orders?.length || 0} completed orders for sales report`);
 
 	// Group by date
 	const salesByDate: Record<string, DateSales> = {};
@@ -444,7 +496,9 @@ async function exportSales(workbook: ExcelJS.Workbook, filters: Filters) {
 	headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
 
 	// Add sales data
-	const dates = Object.keys(salesByDate).sort();
+	const dates = Object.keys(salesByDate).sort((a, b) => {
+		return new Date(a).getTime() - new Date(b).getTime();
+	});
 
 	if (dates.length > 0) {
 		dates.forEach((date, index) => {
@@ -610,10 +664,9 @@ async function exportProducts(workbook: ExcelJS.Workbook) {
 		const summary3 = worksheet.addRow([
 			'', // id
 			'TOTAL INVENTORY VALUE:', // name
-			'',
 			'', // category
-			totalValue, // price
-			'', // stock
+			'', // price
+			totalValue, // stock
 			'', // description
 			'', // image
 			'' // created_at
@@ -764,8 +817,9 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 		const summary3 = worksheet.addRow([
 			'TOTAL REVENUE:', // name
 			'', // email
-			'',
 			'', // phone
+			'', // address
+			'', // order_count
 			totalRevenue, // total_spent
 			'' // avg_order_value
 		]);
@@ -775,8 +829,9 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 			'', // email
 			'', // phone
 			'', // address
-			avgOrderValue,
-			''
+			'', // order_count
+			avgOrderValue.toFixed(2), // total_spent
+			'' // avg_order_value
 		]);
 
 		[summary1, summary2, summary3, summary4].forEach((row) => {
