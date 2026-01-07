@@ -338,7 +338,7 @@
 					email: customerEmail,
 					phone: customerPhone,
 					address: customerAddress,
-					comments: customerComments || '' // Ensure comments are sent even if empty
+					comments: customerComments || ''
 				},
 				items: cart.map((item) => ({
 					id: item.id,
@@ -352,8 +352,8 @@
 				failureUrl: `${window.location.origin}/payment-failed?payment_status=failed`
 			};
 
-			console.log('🔄 Sending payment request with comments:', customerComments); // Debug log
-			console.log('📦 Order data:', JSON.stringify(orderData, null, 2)); // Debug log
+			console.log('🔄 Sending payment request with comments:', customerComments);
+			console.log('📦 Order data:', JSON.stringify(orderData, null, 2));
 
 			const response = await fetch('/api/create-payment', {
 				method: 'POST',

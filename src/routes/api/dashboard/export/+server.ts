@@ -825,13 +825,13 @@ async function exportCustomers(workbook: ExcelJS.Workbook) {
 		]);
 
 		const summary4 = worksheet.addRow([
-			'AVERAGE ORDER VALUE:', // name
-			'', // email
-			'', // phone
-			'', // address
-			'', // order_count
-			avgOrderValue.toFixed(2), // total_spent
-			'' // avg_order_value
+			'AVERAGE ORDER VALUE:',
+			'',
+			'',
+			'',
+			'',
+			avgOrderValue.toFixed(2),
+			''
 		]);
 
 		[summary1, summary2, summary3, summary4].forEach((row) => {
